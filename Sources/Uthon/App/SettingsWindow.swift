@@ -86,6 +86,8 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
 final class SettingsRouter: ObservableObject {
     static let shared = SettingsRouter()
     @Published var tab: SettingsTab = .general
+    /// Lets the menu bar (or the screenshot tour) start a search.
+    @Published var searchRequest: String?
     /// The setting just found with Search (shown at the top of its page for a moment).
     @Published private(set) var highlight: String?
     @Published private(set) var highlightID = 0
@@ -186,6 +188,11 @@ struct SettingsView: View {
                 }
             }
             .searchable(text: $query, placement: .sidebar, prompt: Text(L("Search")))
+            .onReceive(router.$searchRequest) { request in
+                guard let request else { return }
+                query = request
+                router.searchRequest = nil
+            }
             .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 280)
         } detail: {
             detail(for: router.tab)

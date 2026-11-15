@@ -376,6 +376,15 @@ enum SnapshotTour {
         add("live-wallpaper-settings") { SettingsWindowController.shared.show(tab: .wallpaper) }
         add("live-wallpaper-settings-wait") { }
         add("capture-live-settings") { capture("screen-settings-wallpaper") }
+        add("live-settings-search") {
+            SettingsWindowController.shared.show(tab: .general)
+            SettingsRouter.shared.searchRequest = "dim"
+        }
+        add("capture-settings-search") { capture("screen-settings-search") }
+        add("live-settings-search-go") {
+            if let hit = SettingsSearch.results("Warmth").first { SettingsRouter.shared.go(to: hit) }
+        }
+        add("capture-settings-search-go") { capture("screen-settings-search-found") }
         add("live-wallpaper-off") {
             SettingsWindowController.shared.hide()
             UserLibrary.shared.liveEnabled = false
