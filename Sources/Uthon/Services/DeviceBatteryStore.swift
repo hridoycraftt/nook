@@ -37,6 +37,13 @@ final class DeviceBatteryStore: ObservableObject {
     @Published private(set) var lastChecked: Date?
     /// True only on Macs with a built-in battery (MacBooks).
     @Published private(set) var hasInternalBattery = false
+    /// Looking right now (Settings shows a spinner).
+    @Published private(set) var looking = false
+    /// Connected devices that have not reported a battery level (yet).
+    @Published private(set) var connectedWithoutLevel: [String] = []
+
+    private let watcher = DeviceConnectionWatcher()
+    private var followUps: [DispatchWorkItem] = []
 
     private var warned: Set<String> = []
     private var deviceTimer: Timer?
@@ -45,6 +52,10 @@ final class DeviceBatteryStore: ObservableObject {
 
     func start() {
         refreshDevices()
+        // A mouse or keyboard that connects (or wakes up) is picked up at once, not at the next
+        // five-minute check. Its battery level appears a moment after it connects, so look a
+        // few times.
+        watcher.start { [weak self] in self?.deviceConnectionChanged() }
         let t = Timer(timeInterval: 300, repeats: true) { [weak self] _ in self?.refreshDevices() }
         RunLoop.main.add(t, forMode: .common)
         deviceTimer = t
@@ -86,16 +97,49 @@ final class DeviceBatteryStore: ObservableObject {
 
     // MARK: Magic Mouse / Keyboard / Trackpad
 
+    func deviceConnectionChanged() {
+        followUps.forEach { $0.cancel() }
+        followUps = [2.0, 8.0, 25.0].map { delay in
+            let work = DispatchWorkItem { [weak self] in self?.refreshDevices() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+            return work
+        }
+    }
+
+    private var inFlight = false
+
     func refreshDevices() {
+        guard !inFlight else { return }
+        inFlight = true
+        if !looking { looking = true }
         DispatchQueue.global(qos: .utility).async { [weak self] in
             var lines: [String] = []
             let found = Self.readDevices(report: &lines)
+            let connected = Self.connectedNames()
+            let withoutLevel = connected.filter { name in !found.contains { Self.sameDevice($0.name, name) } }
+            if !withoutLevel.isEmpty { lines.append("Connected, no battery level yet: " + withoutLevel.joined(separator: ", ")) }
             DispatchQueue.main.async {
-                self?.devices = found
-                self?.report = lines
-                self?.lastChecked = Date()
-                self?.checkLow()
+                guard let self else { return }
+                self.inFlight = false
+                if self.devices != found { self.devices = found }
+                self.report = lines
+                if self.connectedWithoutLevel != withoutLevel { self.connectedWithoutLevel = withoutLevel }
+                self.lastChecked = Date()
+                self.looking = false
+                self.checkLow()
             }
+        }
+    }
+
+    /// Names of connected Bluetooth devices, whether or not they report a battery.
+    static func connectedNames() -> [String] {
+        guard CBManager.authorization == .allowedAlways else { return [] }
+        let paired = (IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice]) ?? []
+        return paired.filter { $0.isConnected() }.compactMap { device in
+            let name = (device.name ?? "").trimmingCharacters(in: .whitespaces)
+            guard !name.isEmpty, !looksLikeAddress(name) else { return nil }
+            // Only things that could have a battery we show (keyboards, mice, trackpads, audio).
+            return (device.deviceClassMajor == 0x05 || device.deviceClassMajor == 0x04) ? name : nil
         }
     }
 
@@ -434,4 +478,49 @@ struct HeadphoneLevels: Equatable {
     var single: Int?
 
     var isEmpty: Bool { left == nil && right == nil && caseLevel == nil && single == nil }
+}
+
+/// Tells when a wireless keyboard, mouse or trackpad (or any Bluetooth device) connects or
+/// goes away: from the I/O registry (where their battery level lives) and from Bluetooth.
+final class DeviceConnectionWatcher: NSObject {
+    private var port: IONotificationPortRef?
+    private var iterators: [io_iterator_t] = []
+    private var onChange: (() -> Void)?
+    private var bluetoothConnect: IOBluetoothUserNotification?
+
+    func start(_ onChange: @escaping () -> Void) {
+        guard port == nil else { return }
+        self.onChange = onChange
+        guard let port = IONotificationPortCreate(kIOMainPortDefault) else { return }
+        self.port = port
+        IONotificationPortSetDispatchQueue(port, DispatchQueue.main)
+        let context = Unmanaged.passUnretained(self).toOpaque()
+        let callback: IOServiceMatchingCallback = { refcon, iterator in
+            // Drain the iterator (required to keep receiving notifications).
+            while case let service = IOIteratorNext(iterator), service != 0 { IOObjectRelease(service) }
+            guard let refcon else { return }
+            Unmanaged<DeviceConnectionWatcher>.fromOpaque(refcon).takeUnretainedValue().onChange?()
+        }
+        for type in [kIOFirstMatchNotification, kIOTerminatedNotification] {
+            var iterator: io_iterator_t = 0
+            if IOServiceAddMatchingNotification(port, type, IOServiceMatching("AppleDeviceManagementHIDEventService"),
+                                                callback, context, &iterator) == KERN_SUCCESS {
+                while case let service = IOIteratorNext(iterator), service != 0 { IOObjectRelease(service) }
+                iterators.append(iterator)
+            }
+        }
+        if CBManager.authorization == .allowedAlways {
+            bluetoothConnect = IOBluetoothDevice.register(forConnectNotifications: self, selector: #selector(connected(_:device:)))
+        }
+    }
+
+    @objc private func connected(_ note: IOBluetoothUserNotification, device: IOBluetoothDevice) {
+        device.register(forDisconnectNotification: self, selector: #selector(disconnected(_:device:)))
+        onChange?()
+    }
+
+    @objc private func disconnected(_ note: IOBluetoothUserNotification, device: IOBluetoothDevice) {
+        note.unregister()
+        onChange?()
+    }
 }

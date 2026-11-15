@@ -1139,6 +1139,26 @@ enum SelfTest {
         }
     }
 
+    private static func settingsSearchChecks() {
+        step("Settings search")
+        func pages(_ q: String) -> Set<SettingsTab> { Set(SettingsSearch.results(q).map(\.tab)) }
+        check("Nothing typed, no results", SettingsSearch.results("  ").isEmpty)
+        check("\"dim\" finds Night Dimming", pages("dim").contains(.night))
+        check("\"hijri\" finds the Hijri setting", pages("hijri").contains(.ramadan))
+        check("A wallpaper's name finds the Wallpaper page", pages("Aurora").contains(.wallpaper))
+        check("\"battery\" finds the batteries", pages("batter").contains(.widgets))
+        check("\"sehri\" finds the reminder", pages("sehri").contains(.ramadan))
+        check("Page names come first", SettingsSearch.results("Wallpaper").first?.isPage == true)
+        let covered = Set(SettingsSearch.entries.map(\.1))
+        let missing = SettingsTab.allCases.filter { !covered.contains($0) }
+        check("Every Settings page is searchable", missing.isEmpty, missing.map(\.rawValue).joined(separator: ", "))
+        check("Search index is filled", SettingsSearch.entries.count > 200, "\(SettingsSearch.entries.count)")
+        let hit = SettingsSearch.results("Warmth").first { $0.tab == .night }
+        if let hit { SettingsRouter.shared.go(to: hit) }
+        check("Choosing a result opens its page", SettingsRouter.shared.tab == .night && SettingsRouter.shared.highlight == "Warmth")
+        SettingsRouter.shared.tab = .general
+    }
+
     /// How long the Settings window takes to open and to switch pages.
     private static func settingsSpeed() {
         step("Settings speed")
@@ -1178,6 +1198,7 @@ enum SelfTest {
     }
 
     private static func onlineChecks() {
+        settingsSearchChecks()
         settingsSpeed()
         step("Online sources")
         Task {

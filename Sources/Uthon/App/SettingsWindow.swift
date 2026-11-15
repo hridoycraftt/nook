@@ -86,6 +86,22 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
 final class SettingsRouter: ObservableObject {
     static let shared = SettingsRouter()
     @Published var tab: SettingsTab = .general
+    /// The setting just found with Search (shown at the top of its page for a moment).
+    @Published private(set) var highlight: String?
+    @Published private(set) var highlightID = 0
+
+    /// Open the page a search result is on and point out the setting.
+    func go(to hit: SettingsHit) {
+        tab = hit.tab
+        guard !hit.isPage else { highlight = nil; return }
+        highlightID += 1
+        let id = highlightID
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { highlight = hit.title }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            guard let self, self.highlightID == id else { return }
+            withAnimation(.easeOut(duration: 0.25)) { self.highlight = nil }
+        }
+    }
 }
 
 final class SettingsWindowController {
@@ -156,9 +172,51 @@ enum LoginItem {
 struct SettingsView: View {
     @ObservedObject private var router = SettingsRouter.shared
     @ObservedObject private var settings = AppSettings.shared
+    @State private var query = ""
+
+    private var hits: [SettingsHit] { SettingsSearch.results(query) }
 
     var body: some View {
         NavigationSplitView {
+            Group {
+                if query.trimmingCharacters(in: .whitespaces).isEmpty {
+                    pages
+                } else {
+                    searchResults
+                }
+            }
+            .searchable(text: $query, placement: .sidebar, prompt: Text(L("Search")))
+            .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 280)
+        } detail: {
+            detail(for: router.tab)
+                .navigationTitle(L(router.tab.title))
+                .overlay(alignment: .top) { SettingsFoundBanner() }
+        }
+        .navigationSplitViewStyle(.balanced)
+        .frame(minWidth: 760, minHeight: 520)
+        .id(settings.lookKey)
+        .environment(\.locale, Localization.locale)
+    }
+
+    /// Search results, as in System Settings: every matching setting and the page it is on.
+    private var searchResults: some View {
+        let results = hits
+        return List {
+            if results.isEmpty {
+                Text(L("No results")).foregroundStyle(.secondary)
+            } else {
+                ForEach(results) { hit in
+                    Button { router.go(to: hit) } label: { SettingsHitRow(hit: hit) }
+                        .buttonStyle(.plain)
+                        .listRowBackground(hit.tab == router.tab && (router.highlight == hit.title || hit.isPage)
+                                           ? RoundedRectangle(cornerRadius: 6).fill(Color.accentColor.opacity(0.15)) : nil)
+                }
+            }
+        }
+        .listStyle(.sidebar)
+    }
+
+    private var pages: some View {
             List(selection: Binding(get: { Optional(router.tab) }, set: { if let tab = $0 { router.tab = tab } })) {
                 // The app's name scrolls with the list (as the account row in System Settings),
                 // so rows never slide underneath it.
@@ -185,15 +243,6 @@ struct SettingsView: View {
                 }
             }
             .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
-        } detail: {
-            detail(for: router.tab)
-                .navigationTitle(L(router.tab.title))
-        }
-        .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 760, minHeight: 520)
-        .id(settings.lookKey)
-        .environment(\.locale, Localization.locale)
     }
 
     @ViewBuilder
@@ -1072,7 +1121,7 @@ private struct BatteriesSection: View {
 
     var body: some View {
             Section {
-                if batteries.devices.isEmpty {
+                if batteries.devices.isEmpty && batteries.connectedWithoutLevel.isEmpty {
                     Text(L("No wireless devices found yet.")).foregroundStyle(.secondary)
                 } else {
                     ForEach(batteries.devices) { device in
@@ -1083,9 +1132,34 @@ private struct BatteriesSection: View {
                             Text("\(device.percent)%").monospacedDigit()
                         }
                     }
+                    // Connected, but macOS has not told us the battery level (yet).
+                    ForEach(batteries.connectedWithoutLevel, id: \.self) { name in
+                        HStack {
+                            Image(systemName: DeviceBatteryStore.symbol(for: name)).frame(width: 20)
+                            Text(name)
+                            Spacer()
+                            Text(L("Connected · battery not reported yet")).font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
                 }
-                HStack {
-                    Button(L("Look again")) { batteries.refreshDevices() }
+                HStack(spacing: 10) {
+                    Button {
+                        batteries.refreshDevices()
+                    } label: {
+                        if batteries.looking {
+                            HStack(spacing: 6) { ProgressView().controlSize(.small); Text(L("Looking…")) }
+                        } else {
+                            Text(L("Look again"))
+                        }
+                    }
+                    .disabled(batteries.looking)
+                    if !batteries.looking, let date = batteries.lastChecked {
+                        Text(L("Checked at") + " " + date.formatted(date: .omitted, time: .standard) + " · "
+                             + "\(batteries.devices.count + batteries.connectedWithoutLevel.count) " + L("found"))
+                            .font(.footnote).foregroundStyle(.secondary)
+                            .transition(.opacity)
+                    }
+                    Spacer()
                     if CBManager.authorization != .allowedAlways {
                         Button(L("Allow Bluetooth")) {
                             if CBManager.authorization == .notDetermined {
@@ -1096,6 +1170,7 @@ private struct BatteriesSection: View {
                         }
                     }
                 }
+                .animation(.easeOut(duration: 0.2), value: batteries.looking)
                 DisclosureGroup(L("What each source found")) {
                     ForEach(batteries.report, id: \.self) { line in
                         Text(line).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)

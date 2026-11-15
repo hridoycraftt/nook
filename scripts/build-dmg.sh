@@ -15,6 +15,8 @@ APP="$DIST/$APP_NAME.app"
 ARCHS=(--arch arm64 --arch x86_64)
 
 echo "==> Building $APP_NAME $VERSION ($BUILD_NUMBER)"
+# Keep the Settings search index in step with the Settings pages.
+python3 scripts/gen-settings-index.py || echo "settings index not regenerated"
 swift build -c release "${ARCHS[@]}"
 BIN_DIR="$(swift build -c release "${ARCHS[@]}" --show-bin-path)"
 
