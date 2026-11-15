@@ -1,0 +1,27 @@
+Nook performance (1024x768 @1.0x)
+phase                    cpu %   frames     late   worst ms
+idle-closed                 9.1      362        0       16.7
+open-home                   4.9      383        5       48.1
+open-close                 42.4      415        2       82.3
+tab-switch                 10.0      419        5       73.7
+wallpaper-idle              5.8      359        2       42.6
+wallpaper-open-close       46.5      392       14       73.7
+
+Nook performance (1024x768 @1.0x)
+phase                    cpu %   frames     late   worst ms
+idle-closed                 1.7      360        0       16.7
+open-home                   2.8      375        3       33.8
+open-close                 42.4      415        4       41.5
+tab-switch                  6.0      423        4       50.7
+wallpaper-idle              4.1      363        0       16.7
+wallpaper-open-close       44.0      418        2       46.9
+
+Nook performance (1024x768 @1.0x)
+phase                    cpu %   frames     late   worst ms
+idle-closed                 1.9      359        1       42.5
+open-home                   4.0      373        3       57.9
+open-close                 41.7      397       13       79.1
+tab-switch                  8.2      402        7      260.4
+wallpaper-idle              4.1      359        2       35.3
+wallpaper-open-close       42.2      395       12       72.5
+

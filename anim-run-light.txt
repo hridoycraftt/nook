@@ -1,0 +1,8 @@
+IOServiceMatchingfailed for: AppleM2ScalerParavirtDriver
+anim-test 282.708 screen 1024.0x768.0 scale 1.0 island scale 0.6227027027027027
+anim-test 284.712 open 1
+anim-test 286.113 close 1
+anim-test 287.312 open 2
+anim-test 289.212 close 2
+anim-test 289.727 open 3
+anim-test 295.263 done
