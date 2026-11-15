@@ -1,0 +1,7 @@
+anim-test 325.978 screen 1024.0x768.0 scale 1.0 island scale 0.6227027027027027
+anim-test 332.056 open 1
+anim-test 332.057 close 1
+anim-test 332.057 open 2
+anim-test 332.057 close 2
+anim-test 332.987 open 3
+anim-test 337.491 done
