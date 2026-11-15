@@ -197,7 +197,8 @@ struct SettingsView: View {
         } detail: {
             detail(for: router.tab)
                 .navigationTitle(L(router.tab.title))
-                .overlay(alignment: .top) { SettingsFoundBanner() }
+                // Below the title bar (an overlay would sit underneath it).
+                .safeAreaInset(edge: .top, spacing: 0) { SettingsFoundBanner().frame(maxWidth: .infinity) }
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 760, minHeight: 520)

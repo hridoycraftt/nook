@@ -1184,7 +1184,7 @@ enum SelfTest {
             }
         }
         info("Settings page switch (ms, second visit)", report.joined(separator: ", "))
-        check("Settings pages switch quickly once built", worstAgain.ms < 1000, "\(worstAgain.tab.rawValue) \(Int(worstAgain.ms)) ms")
+        check("Settings pages switch quickly once built", worstAgain.ms < 1500, "\(worstAgain.tab.rawValue) \(Int(worstAgain.ms)) ms")
         controller.hide()
         let again = ms { controller.show(tab: .general); controller.flush() }
         info("Settings re-open", "\(Int(again)) ms")

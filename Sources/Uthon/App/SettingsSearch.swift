@@ -101,7 +101,7 @@ struct SettingsFoundBanner: View {
             .padding(.vertical, 6)
             .background(Capsule().fill(Color.accentColor.opacity(0.18)))
             .overlay(Capsule().strokeBorder(Color.accentColor.opacity(0.5)))
-            .padding(.top, 8)
+            .padding(.vertical, 6)
             .transition(.move(edge: .top).combined(with: .opacity))
             .id(router.highlightID)
         }
