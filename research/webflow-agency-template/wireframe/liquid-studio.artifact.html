@@ -606,6 +606,103 @@ html.lock{overflow:hidden}
 .e1 .leg{margin-top:clamp(36px,5vh,56px)}
 @media (min-width:861px) and (max-width:1180px){.voices .table{min-height:940px}}
 @media (max-width:860px){.svcs .pin{height:280vh}.voices .table{min-height:0;padding-top:220px;padding-bottom:72px}.wtitle .r{margin-top:12px}}
+/* ===== NEW · Featured case study ===== */
+.cs{padding-bottom:var(--sec-bot)}
+.cs .body{padding:0 var(--pad);align-items:stretch;row-gap:24px}
+.cs .cmp{grid-column:1/span 8;position:relative;aspect-ratio:16/10;overflow:hidden;border-radius:6px;background:#15151c;--p:50%;user-select:none;-webkit-user-select:none}
+.cs .lay{position:absolute;inset:0}
+.cs .aft .cv{position:absolute;inset:0;background-size:cover;background-position:center}
+.cs .aft::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(7,7,10,.72),rgba(7,7,10,0) 58%)}
+.cs .mock{position:absolute;inset:0;z-index:2;padding:4% 5%;display:flex;flex-direction:column;justify-content:space-between}
+.cs .mock .nv{display:flex;justify-content:space-between;align-items:center;font:500 14px/1 var(--sans)}
+.cs .mock .nv i{display:flex;gap:20px;font-style:normal;color:rgba(240,236,230,.8)}
+.cs .mock h4{font:500 clamp(36px,5vw,84px)/.92 var(--sans);letter-spacing:-.06em;max-width:10ch}
+.cs .mock h4 span{font-weight:200}
+.cs .mock .bt{display:inline-flex;align-self:flex-start;height:40px;padding:0 16px;align-items:center;background:var(--bone);color:var(--ink);font:500 14px/1 var(--sans);margin-top:16px}
+.cs .bef{z-index:3;clip-path:inset(0 calc(100% - var(--p)) 0 0);background:#d9d6d1;color:#45424c;padding:4% 5%;display:flex;flex-direction:column;gap:4%}
+.cs .bef .nv{display:flex;justify-content:space-between;align-items:center;font:600 14px/1 Arial,Helvetica,sans-serif;color:#2a2830;border-bottom:2px solid #b9b5ae;padding-bottom:12px}
+.cs .bef .nv i{display:flex;gap:14px;font:400 14px/1 Arial,sans-serif;font-style:normal;color:#5b5862}
+.cs .bef .bn{flex:1;display:grid;grid-template-columns:1.2fr 1fr;gap:4%}
+.cs .bef .bx{background:#c3bfb8;display:grid;place-items:center;font:400 14px/1 Arial,sans-serif;color:#3e3b44}
+.cs .bef .tx{display:flex;flex-direction:column;gap:12px;justify-content:center}
+.cs .bef .tx b{font:700 clamp(20px,2.2vw,32px)/1.1 Arial,Helvetica,sans-serif;color:#2a2830}
+.cs .bef .tx s{display:block;height:10px;background:#c3bfb8;text-decoration:none}
+.cs .bef .tx s:nth-child(3){width:80%}.cs .bef .tx s:nth-child(4){width:60%}
+.cs .tag2{position:absolute;bottom:16px;z-index:5;height:30px;padding:0 12px;display:inline-flex;align-items:center;border-radius:99px;font:400 14px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;pointer-events:none}
+.cs .tag2.b{left:16px;background:rgba(24,23,29,.82);color:#f0ece6}.cs .tag2.a{right:16px;background:var(--bone);color:var(--ink)}
+.cs .hnd{position:absolute;top:0;bottom:0;left:var(--p);z-index:4;width:2px;margin-left:-1px;background:var(--bone);pointer-events:none;box-shadow:0 0 18px rgba(255,107,69,.6)}
+.cs .hnd b{position:absolute;top:50%;left:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:var(--bone);color:var(--ink);display:grid;place-items:center;box-shadow:0 10px 30px -8px rgba(0,0,0,.6);transition:transform .4s var(--ease)}
+.cs .hnd b svg{width:22px;height:12px}
+.cs .cmp:hover .hnd b{transform:scale(1.08)}
+.cs .rng{position:absolute;inset:0;z-index:6;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;-webkit-appearance:none;appearance:none}
+.cs .rng:focus-visible~.hnd b{outline:2px solid var(--c2);outline-offset:4px}
+.cs .inf{grid-column:9/-1;display:flex;flex-direction:column;gap:20px;justify-content:space-between}
+.cs .inf h3{font:500 clamp(36px,3.4vw,60px)/.96 var(--sans);letter-spacing:-.06em}
+.cs .inf h3 span{font-weight:200}
+.cs .inf p{color:var(--smoke)}
+.cs .rs{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.cs .rs div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.cs .rs b{font:300 clamp(36px,3vw,52px)/1 var(--sans);letter-spacing:-.06em;background:linear-gradient(90deg,var(--bone),var(--c3));-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.cs .rs span{text-align:right;max-width:16ch}
+.cs .tg{display:flex;gap:6px;flex-wrap:wrap}
+.cs .tg span{height:30px;padding:0 12px;display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:99px;font:400 14px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--smoke)}
+@media (max-width:860px){.cs .cmp,.cs .inf{grid-column:1/-1}.cs .cmp{aspect-ratio:4/5}.cs .bef .bn{grid-template-columns:1fr}.cs .mock .nv i,.cs .bef .nv i{display:none}}
+
+/* ===== NEW · Team ===== */
+.tm{padding-bottom:var(--sec-bot)}
+.tm .grid9{padding:0 var(--pad);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
+.tm .pp{position:relative;aspect-ratio:3/4;overflow:hidden;border-radius:6px;background:#15151c;isolation:isolate;outline:none}
+.tm .pp .cv{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center;filter:saturate(.35) brightness(.7);transform:scale(1.04);transition:filter .8s var(--ease),transform 1.2s var(--ease)}
+.tm .pp::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,rgba(7,7,10,.9),rgba(7,7,10,0) 55%)}
+.tm .pp .mn{position:absolute;left:50%;top:40%;translate:-50% -50%;font:200 clamp(64px,7vw,128px)/1 var(--sans);letter-spacing:-.06em;color:rgba(240,236,230,.86);transition:transform 1s var(--ease),opacity .6s}
+.tm .pp .pi{position:absolute;left:16px;right:16px;bottom:16px;display:flex;flex-direction:column;gap:6px}
+.tm .pp .pi b{font:500 clamp(18px,1.4vw,22px)/1.1 var(--sans);letter-spacing:-.02em}
+.tm .pp .ff{display:grid;grid-template-rows:0fr;transition:grid-template-rows .6s var(--ease)}
+.tm .pp .ff>span{overflow:hidden;min-height:0;color:rgba(240,236,230,.82);font:400 14px/1.45 var(--sans)}
+.tm .pp .ff>span i{display:block;padding-top:8px;font-style:normal}
+.tm .pp:hover .cv,.tm .pp:focus-visible .cv{filter:none;transform:scale(1.1)}
+.tm .pp:hover .mn,.tm .pp:focus-visible .mn{transform:translateY(-14px);opacity:.3}
+.tm .pp:hover .ff,.tm .pp:focus-visible .ff{grid-template-rows:1fr}
+.tm .pp:focus-visible{box-shadow:0 0 0 2px var(--c2)}
+.tm .hire{aspect-ratio:3/4;border-radius:6px;background:var(--bone);color:var(--ink);padding:20px;display:flex;flex-direction:column;justify-content:space-between}
+.tm .hire h3{font:500 clamp(30px,2.6vw,46px)/.96 var(--sans);letter-spacing:-.05em}
+.tm .hire h3 span{font-weight:200}
+.tm .hire ul{list-style:none;border-top:1px solid rgba(16,16,20,.16)}
+.tm .hire li{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(16,16,20,.16);font:500 15px/1.2 var(--sans)}
+.tm .hire li span{font:400 14px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:#5b5862}
+.tm .hire .bk{background:var(--ink);color:var(--bone);align-self:flex-start}.tm .hire .bk .ar{border-left-color:rgba(240,236,230,.2)}
+.tm .stc{aspect-ratio:3/4;border-radius:6px;border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(80% 60% at 30% 100%,rgba(30,47,184,.22),transparent 70%)}
+.tm .stc b{display:block;font:200 clamp(64px,6vw,112px)/.86 var(--sans);letter-spacing:-.07em}
+.tm .stc .row{display:flex;flex-direction:column;gap:14px}
+.tm .stc .row div{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:10px;gap:12px}
+@media (max-width:1100px){.tm .grid9{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:860px){.tm .grid9{grid-template-columns:repeat(2,minmax(0,1fr))}.tm .hire,.tm .stc{grid-column:1/-1;aspect-ratio:auto;gap:24px}.tm .pp .ff{display:none}.tm .pp .mn{top:38%;font-size:56px}}
+@media (hover:none){.tm .pp .cv{filter:none}}
+
+/* ===== NEW · Process ===== */
+.pr{padding-bottom:var(--sec-bot)}
+.pr .ptrk{position:relative;margin:0 var(--pad);padding-top:40px}
+.pr .pln{position:absolute;left:0;right:0;top:9px;height:2px;background:var(--line-2);border-radius:2px}
+.pr .pln i{position:absolute;inset:0;background:linear-gradient(90deg,var(--c1),var(--c2),var(--c3));transform-origin:left;transform:scaleX(0);border-radius:2px;box-shadow:0 0 14px rgba(255,107,69,.5)}
+.pr .stp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
+.pr .st{position:relative;display:flex;flex-direction:column;gap:14px;padding-right:12px}
+.pr .st::before{content:"";position:absolute;left:0;top:-40px;width:20px;height:20px;border-radius:50%;background:var(--night);border:2px solid var(--line-2);transition:border-color .5s,background .5s,box-shadow .5s}
+.pr .st.on::before{border-color:transparent;background:linear-gradient(135deg,var(--c2),var(--c3));box-shadow:0 0 0 6px rgba(255,107,69,.14),0 0 22px rgba(255,107,69,.6)}
+.pr .st h3{font:500 clamp(32px,3vw,52px)/1 var(--sans);letter-spacing:-.05em;color:var(--smoke);transition:color .6s}
+.pr .st.on h3{color:var(--bone)}
+.pr .st p{color:var(--smoke);max-width:30ch}
+.pr .st .vis{position:relative;height:clamp(120px,15vh,160px);border-radius:6px;overflow:hidden;background-size:cover;background-position:center;filter:saturate(.2) brightness(.55);transition:filter .9s var(--ease)}
+.pr .st.on .vis{filter:none}
+.pr .st .vis span{position:absolute;left:12px;bottom:12px;height:28px;padding:0 10px;display:inline-flex;align-items:center;border-radius:99px;background:rgba(7,7,10,.6);font:400 14px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.pr .st ul{list-style:none;display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.pr .st li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font:400 15px/1.3 var(--sans);color:rgba(240,236,230,.78)}
+.pr .st li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--line-2);flex:none;transition:background .5s}
+.pr .st.on li::before{background:var(--c2)}
+.pr .bot{margin:clamp(28px,4vh,44px) var(--pad) 0;padding:20px 24px;border:1px solid var(--line);border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;background:linear-gradient(90deg,rgba(30,47,184,.12),rgba(255,107,69,.08))}
+.pr .bot b{font:500 clamp(20px,1.8vw,28px)/1.1 var(--sans);letter-spacing:-.03em}
+.pr .bot b span{font-weight:200}
+@media (max-width:860px){.pr .ptrk{padding:0 0 0 36px}.pr .pln{left:9px;right:auto;top:0;bottom:0;width:2px;height:auto}.pr .pln i{transform-origin:top;transform:scaleY(0)}.pr .stp{grid-template-columns:1fr;gap:40px}.pr .st::before{left:-36px;top:4px}}
+
 /* ===== final pass: typography + mobile ===== */
 :where(a,button,input,[tabindex]):focus-visible{outline:2px solid var(--c2);outline-offset:3px}
 h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
@@ -625,7 +722,7 @@ h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
 <div class="nav9" role="banner" aria-hidden="true"><a class="lg" href="#hero" tabindex="-1"><i></i>Studio</a><nav class="ln" aria-label="Primary"><a href="#work" tabindex="-1">Work</a><a href="#services" tabindex="-1">Services</a><a href="#journal" tabindex="-1">Journal</a><a href="#pricing" tabindex="-1">Pricing</a></nav><a class="bk" href="#contact" tabindex="-1"><span class="lb"><span class="roll"><span>Start a project</span><span>Start a project</span></span></span><span class="ar"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 7h12M8 2l5 5-5 5"/></svg></span></a><button class="mbtn" aria-expanded="false" aria-controls="ov9" tabindex="-1">Menu<span class="bars"></span></button></div>
 <div class="ov9" id="ov9" role="dialog" aria-modal="true" aria-label="Site menu" inert><span class="bg"></span>
   <div class="tp"><a class="lg9" href="#hero"><i></i>Liquid Studio</a><button class="x9">Close<i><svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 2l8 8M10 2l-8 8"/></svg></i></button></div>
-  <nav class="big" aria-label="Sections"><a href="#work"><span>Work</span><small>24 projects</small></a><a href="#numbers"><span>Studio</span><small>Since 2014</small></a><a href="#services"><span>Services</span><small>Four disciplines</small></a><a href="#journal"><span>Journal</span><small>New essays</small></a><a href="#pricing"><span>Pricing</span><small>Get an estimate</small></a><a href="#contact"><span>Contact</span><small>Booking Q1 2027</small></a></nav>
+  <nav class="big" aria-label="Sections"><a href="#work"><span>Work</span><small>24 projects</small></a><a href="#team"><span>Studio</span><small>14 people</small></a><a href="#process"><span>Process</span><small>10–14 weeks</small></a><a href="#services"><span>Services</span><small>Four disciplines</small></a><a href="#journal"><span>Journal</span><small>New essays</small></a><a href="#pricing"><span>Pricing</span><small>Get an estimate</small></a><a href="#contact"><span>Contact</span><small>Booking Q1 2027</small></a></nav>
   <div class="side"><div class="row"><div class="fl"><span class="hd7">Social</span><a href="#">Instagram</a><a href="#">LinkedIn</a><a href="#">Dribbble</a></div><div class="fl"><span class="hd7">Say hello</span><a href="mailto:hello@liquid.studio">hello@liquid.studio</a><a href="#faq">FAQ</a></div></div><span class="hd7">Lisbon <b class="fz1">--:--</b> · Toronto <b class="fz2">--:--</b></span></div>
 </div>
 <div class="lb9" role="dialog" aria-modal="true" aria-label="Studio showreel" inert><button class="xc" aria-label="Close showreel"><svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
@@ -660,6 +757,26 @@ h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
   </div>
 </section>
 
+<!-- ============ NEW · FEATURED CASE STUDY ============ -->
+<section class="cs" id="case" aria-labelledby="cs-h">
+  <div class="shead g12 mono"><span>Featured case</span></div>
+  <div class="wtitle g12"><h2>Before, <span class="th">and after.</span></h2><div class="r"><p>Drag across the frame to see what changed for Halcyon.</p></div></div>
+  <div class="body g12">
+    <div class="cmp">
+      <div class="lay aft" aria-hidden="true"><span class="cv"></span><div class="mock"><div class="nv"><span>Halcyon</span><i><span>Product</span><span>Stories</span><span>Pricing</span></i></div><div><h4>Sleep, <span>re-engineered.</span></h4><span class="bt">Start your trial</span></div></div></div>
+      <div class="lay bef" aria-hidden="true"><div class="nv"><span>HALCYON HEALTH</span><i><span>Home</span><span>About us</span><span>Products</span><span>Contact</span></i></div><div class="bn"><div class="bx">[ hero image ]</div><div class="tx"><b>Welcome to our website</b><s></s><s></s><s></s></div></div><div class="bn" style="grid-template-columns:1fr 1fr 1fr;flex:.6"><div class="bx">[ image ]</div><div class="bx">[ image ]</div><div class="bx">[ image ]</div></div></div>
+      <span class="tag2 b">Before</span><span class="tag2 a">After</span>
+      <input class="rng" type="range" min="0" max="100" value="50" aria-label="Compare before and after: drag to reveal">
+      <span class="hnd" aria-hidden="true"><b><svg viewBox="0 0 22 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 1L1 6l5 5M16 1l5 5-5 5"/></svg></b></span>
+    </div>
+    <div class="inf">
+      <div style="display:flex;flex-direction:column;gap:16px"><span class="hd7">Halcyon · Sleep tech · 2026</span><h3 id="cs-h">Halcyon <span>rebrand</span></h3><p>A dated health brand became a calm, confident product company: new identity, a Webflow site the team edits daily and a launch film.</p><div class="tg"><span>Identity</span><span>Webflow</span><span>Motion</span></div></div>
+      <div class="rs"><div><b class="cc" data-to="42" data-pre="+" data-s="%">+42%</b><span class="hd7">Trial sign-ups in 60 days</span></div><div><b class="cc" data-to="3" data-s="×">3×</b><span class="hd7">Time on page</span></div><div><b class="cc" data-to="6" data-s=" wks">6 wks</b><span class="hd7">Brief to launch</span></div></div>
+      <a class="bk" href="#work"><span class="lb"><span class="roll"><span>Read the case study</span><span>Read the case study</span></span></span><span class="ar"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 7h12M8 2l5 5-5 5"/></svg></span></a>
+    </div>
+  </div>
+</section>
+
 <!-- ============ 02 STUDIO IN NUMBERS (final) ============ -->
 <section class="nums" id="numbers" aria-labelledby="nums-h">
   <div class="shead g12 mono"><span>Studio in numbers</span></div>
@@ -674,6 +791,22 @@ h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
   <div class="foot g12"><p>Trusted by seed-stage startups and listed brands alike, from Lisbon to Singapore.</p><div class="acts"><a class="bk" href="#services"><span class="lb"><span class="roll"><span>What we do</span><span>What we do</span></span></span><span class="ar"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 7h12M8 2l5 5-5 5"/></svg></span></a></div></div>
 </section>
 
+<!-- ============ NEW · TEAM ============ -->
+<section class="tm" id="team" aria-labelledby="tm-h">
+  <div class="shead g12 mono"><span>The studio</span></div>
+  <div class="wtitle g12"><h2 id="tm-h">Small team, <span class="th">senior hands.</span></h2><div class="r"><p>Every project is led by the people you meet on the first call. No hand-offs.</p></div></div>
+  <div class="grid9">
+    <a class="pp" href="#team" data-s="31" data-p="dusk"><span class="cv"></span><span class="mn" aria-hidden="true">AD</span><span class="pi"><b>Ana Duarte</b><span class="hd7">Founder · Creative director</span><span class="ff"><span><i>Started the studio in 2014 with one client and a borrowed desk.</i></span></span></span></a>
+    <a class="pp" href="#team" data-s="47" data-p="rose"><span class="cv"></span><span class="mn" aria-hidden="true">MS</span><span class="pi"><b>Miguel Sousa</b><span class="hd7">Design lead</span><span class="ff"><span><i>Keeps a drawer of 400 type specimens and uses three of them.</i></span></span></span></a>
+    <a class="pp" href="#team" data-s="59" data-p="aurora"><span class="cv"></span><span class="mn" aria-hidden="true">PN</span><span class="pi"><b>Priya Nair</b><span class="hd7">Webflow lead</span><span class="ff"><span><i>Has shipped 60+ Webflow builds; still reads every changelog.</i></span></span></span></a>
+    <a class="pp" href="#team" data-s="71" data-p="ember"><span class="cv"></span><span class="mn" aria-hidden="true">TL</span><span class="pi"><b>Théo Laurent</b><span class="hd7">Motion director</span><span class="ff"><span><i>Made title sequences for film before falling for the web.</i></span></span></span></a>
+    <a class="pp" href="#team" data-s="83" data-p="pearl"><span class="cv"></span><span class="mn" aria-hidden="true">SK</span><span class="pi"><b>Sara Kim</b><span class="hd7">Strategy & naming</span><span class="ff"><span><i>Named eleven companies. Will not tell you her favourite.</i></span></span></span></a>
+    <a class="pp" href="#team" data-s="97" data-p="dusk"><span class="cv"></span><span class="mn" aria-hidden="true">JW</span><span class="pi"><b>Jonas Weber</b><span class="hd7">Creative developer</span><span class="ff"><span><i>Writes shaders for fun and GSAP timelines for a living.</i></span></span></span></a>
+    <div class="stc"><span class="hd7">The whole studio</span><div><b>14</b><span class="hd7">people · two cities</span></div><div class="row"><div><span>Lisbon</span><span class="hd7">9 people</span></div><div><span>Toronto</span><span class="hd7">5 people</span></div></div></div>
+    <div class="hire"><span class="hd7" style="color:#5b5862">Open roles</span><h3>We are <span>hiring.</span></h3><ul><li>Senior designer<span>Lisbon</span></li><li>Webflow developer<span>Remote</span></li></ul><a class="bk" href="#contact"><span class="lb"><span class="roll"><span>See the roles</span><span>See the roles</span></span></span><span class="ar"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 7h12M8 2l5 5-5 5"/></svg></span></a></div>
+  </div>
+</section>
+
 <!-- ============ 04 SERVICES (final) ============ -->
 <section class="svcs" id="services" aria-label="Services">
   <div class="pin"><div class="sticky">
@@ -681,6 +814,19 @@ h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
     <div class="rail" aria-label="Jump to service"></div>
     <div class="prog"><i></i></div>
   </div></div>
+</section>
+
+<!-- ============ NEW · PROCESS ============ -->
+<section class="pr" id="process" aria-labelledby="pr-h">
+  <div class="shead g12 mono"><span>Process</span></div>
+  <div class="wtitle g12"><h2 id="pr-h">How we <span class="th">work.</span></h2><div class="r"><p>Four steps, one team, a fixed timeline agreed before we start.</p></div></div>
+  <div class="ptrk"><div class="pln" aria-hidden="true"><i></i></div><div class="stp">
+    <div class="st"><div class="vis" data-s="211" data-p="pearl"><span>Week 1–2</span></div><h3>Discover</h3><p>Interviews, audits and a workshop to agree what success looks like.</p><ul><li>Stakeholder interviews</li><li>Brand &amp; site audit</li><li>One-page brief</li></ul></div>
+    <div class="st"><div class="vis" data-s="223" data-p="rose"><span>Week 3–6</span></div><h3>Design</h3><p>Identity and key pages designed together, reviewed live every Friday.</p><ul><li>Identity system</li><li>Key page designs</li><li>Motion language</li></ul></div>
+    <div class="st"><div class="vis" data-s="235" data-p="aurora"><span>Week 7–10</span></div><h3>Build</h3><p>A clean Webflow build with a CMS your team can edit from day one.</p><ul><li>Webflow build</li><li>CMS &amp; components</li><li>GSAP interactions</li></ul></div>
+    <div class="st"><div class="vis" data-s="247" data-p="ember"><span>Week 11–12</span></div><h3>Launch</h3><p>QA on real devices, handover training and 30 days of fixes.</p><ul><li>QA &amp; performance</li><li>Team training</li><li>30-day support</li></ul></div>
+  </div></div>
+  <div class="bot"><b>Average project · <span>10–14 weeks, fixed price.</span></b><a class="bk" href="#pricing"><span class="lb"><span class="roll"><span>Get an estimate</span><span>Get an estimate</span></span></span><span class="ar"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 7h12M8 2l5 5-5 5"/></svg></span></a></div>
 </section>
 
 <!-- ============ 05 VOICES (final) ============ -->
@@ -753,7 +899,7 @@ h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
 <!-- ============ 10 FOOTER (final) ============ -->
 <footer class="e1" id="footer" aria-label="Footer"><div class="gr">
   <div class="say"><a class="lg9" href="#hero"><i></i>Liquid Studio</a><p>An independent studio for brand, Webflow and motion. Remote, with desks in Lisbon and Toronto.</p><a class="lk" href="mailto:hello@liquid.studio" style="color:var(--bone)">hello@liquid.studio<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 6h10M7 2l4 4-4 4"/></svg></a></div>
-  <nav class="fl c1" aria-label="Pages"><span class="hd7">Pages</span><a href="#work">Work</a><a href="#services">Services</a><a href="#pricing">Pricing</a><a href="#journal">Journal</a><a href="#contact">Contact</a></nav>
+  <nav class="fl c1" aria-label="Pages"><span class="hd7">Pages</span><a href="#work">Work</a><a href="#team">Studio</a><a href="#services">Services</a><a href="#process">Process</a><a href="#pricing">Pricing</a><a href="#journal">Journal</a><a href="#contact">Contact</a></nav>
   <nav class="fl c2" aria-label="Social"><span class="hd7">Social</span><a href="#">Instagram<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 8l6-6M3 2h5v5"/></svg></a><a href="#">LinkedIn<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 8l6-6M3 2h5v5"/></svg></a><a href="#">Dribbble<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 8l6-6M3 2h5v5"/></svg></a><a href="#">Behance<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 8l6-6M3 2h5v5"/></svg></a></nav>
   <nav class="fl c3" aria-label="Template"><span class="hd7">Template</span><a href="#">Style guide</a><a href="#">Instructions</a><a href="#">Licenses</a><a href="#">Changelog</a></nav>
   <div class="tp"><a class="top9" href="#hero">Back to top<i><svg class="pr9" viewBox="0 0 46 46"><circle class="tr9" cx="23" cy="23" r="22"/><circle class="pg9" cx="23" cy="23" r="22"/></svg><svg class="ar9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M6 11V1M2 5l4-4 4 4"/></svg></i></a></div></div>
@@ -1176,6 +1322,23 @@ document.querySelectorAll('.cpy').forEach(b=>b.addEventListener('click',()=>{try
   addEventListener('keydown',e=>{if(e.key!=='Tab')return;const box=lb.classList.contains('open')?lb:menuOpen?ov:null;if(!box)return;const f=[...box.querySelectorAll('a,button')];const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}});
   const fz=tz=>{try{return new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:tz}).format(new Date())}catch(e){return '--:--'}};const ck=()=>{ov.querySelector('.fz1').textContent=fz('Europe/Lisbon');ov.querySelector('.fz2').textContent=fz('America/Toronto')};ck();setInterval(ck,15000)})();
 
+/* ---------- NEW: case study, team, process ---------- */
+(function(){
+  /* case study compare */
+  const cs=document.querySelector('.cs');if(cs){const cmp=cs.querySelector('.cmp'),r=cs.querySelector('.rng');cs.querySelector('.aft .cv').style.backgroundImage=`url(${snap(1280,800,512,1.15,'dusk')})`;
+    const setP=v=>cmp.style.setProperty('--p',v+'%');r.addEventListener('input',()=>setP(r.value));setP(50);
+    if(G&&ST&&!reduce){const o={v:88};ScrollTrigger.create({trigger:cmp,start:'top 75%',once:true,onEnter:()=>gsap.fromTo(o,{v:88},{v:50,duration:1.8,ease:'expo.inOut',onUpdate:()=>{setP(o.v.toFixed(1));r.value=o.v}})})}
+    cs.querySelectorAll('.cc').forEach(el=>{const to=+el.dataset.to,pre=el.dataset.pre||'',s=el.dataset.s||'';if(!G||!ST||reduce){el.textContent=pre+to+s;return}const o={v:0};el.textContent=pre+'0'+s;
+      ScrollTrigger.create({trigger:el,start:'top 88%',once:true,onEnter:()=>gsap.to(o,{v:to,duration:1.6,ease:'power3.out',onUpdate:()=>el.textContent=pre+Math.round(o.v)+s})})})}
+  /* team portraits */
+  document.querySelectorAll('.tm .pp').forEach(p=>{p.querySelector('.cv').style.backgroundImage=`url(${snap(480,640,+p.dataset.s,1.2,p.dataset.p)})`});
+  /* process */
+  const pr=document.querySelector('.pr');if(pr){pr.querySelectorAll('.vis').forEach(v=>v.style.backgroundImage=`url(${snap(560,320,+v.dataset.s,1.1,v.dataset.p)})`);
+    const st=[...pr.querySelectorAll('.st')],fill=pr.querySelector('.pln i'),mob=()=>innerWidth<=860;
+    if(!G||!ST||reduce){st.forEach(s=>s.classList.add('on'));fill.style.transform='none';return}
+    ScrollTrigger.create({trigger:pr.querySelector('.ptrk'),start:'top 70%',end:'bottom 60%',scrub:.6,onUpdate:s=>{const p=s.progress;fill.style.transform=mob()?`scaleY(${p})`:`scaleX(${p})`;st.forEach((e,i)=>e.classList.toggle('on',p>0.02&&p>=i/st.length))}})}
+})();
+
 function countUp(el){const to=+el.dataset.to,s=el.dataset.s||'';if(!G||reduce){el.textContent=to+s;return}const o={v:0};gsap.to(o,{v:to,duration:2,ease:'power3.out',onUpdate:()=>el.textContent=Math.round(o.v)+s})}
 if(!G||reduce){document.querySelectorAll('.cnt').forEach(countUp);document.querySelectorAll('.nw').forEach(w=>w.style.setProperty('--lv','-30%'));
   /* reduced motion: services switch instantly with scroll, no transitions */
@@ -1230,6 +1393,12 @@ gsap.utils.toArray('.wtitle h2').forEach(h=>gsap.from(h,{y:40,autoAlpha:0,durati
 /* ---------- 10 footer: scroll motion ---------- */
 gsap.fromTo('.e1 .wm span',{yPercent:75},{yPercent:0,duration:1.8,ease:'expo.out',scrollTrigger:{trigger:'.e1 .leg',start:'top 92%'}});
 gsap.fromTo('.e1 .gr > *',{y:30,opacity:0},{y:0,opacity:1,duration:1.1,stagger:.06,ease:'expo.out',scrollTrigger:{trigger:'.e1',start:'top 80%'}});
+
+/* ---------- NEW sections: scroll motion ---------- */
+gsap.from('.cs .cmp',{clipPath:'inset(0 0 100% 0)',duration:1.4,ease:'expo.inOut',scrollTrigger:{trigger:'.cs .cmp',start:'top 85%'}});
+gsap.from('.cs .inf > *',{y:30,autoAlpha:0,duration:1.1,stagger:.08,ease:'expo.out',scrollTrigger:{trigger:'.cs .inf',start:'top 85%'}});
+gsap.from('.tm .grid9 > *',{y:50,autoAlpha:0,duration:1.1,stagger:.06,ease:'expo.out',scrollTrigger:{trigger:'.tm .grid9',start:'top 85%'}});
+gsap.from('.pr .st',{y:40,autoAlpha:0,duration:1.1,stagger:.08,ease:'expo.out',scrollTrigger:{trigger:'.pr .ptrk',start:'top 85%'}});
 
 addEventListener('load',()=>ScrollTrigger.refresh());
 })();
