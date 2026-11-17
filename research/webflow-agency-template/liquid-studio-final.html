@@ -335,7 +335,7 @@ a:hover>.roll span,a:hover .lb .roll span,.roll:hover span{transform:translateY(
 
 /* ===== 07 · JOURNAL (final: depth tunnel) ===== */
 .b2{position:relative;height:420vh}
-.b2 .stg7{perspective:900px;perspective-origin:50% 48%;background:radial-gradient(45% 30% at 50% 48%,rgba(255,107,69,.13),transparent 70%),radial-gradient(70% 45% at 50% 100%,rgba(30,47,184,.16),transparent 70%),var(--night)}
+.b2 .stg7{perspective:900px;perspective-origin:50% 48%;background:radial-gradient(45% 30% at 50% 48%,rgba(255,107,69,.13),transparent 70%),radial-gradient(70% 34% at 50% 66%,rgba(30,47,184,.16),transparent 70%),var(--night)}
 .b2 .hdr7{padding:clamp(14px,2.4vh,26px) var(--pad) 0;align-items:end}
 .b2 .hdr7 h2{grid-column:1/span 7;font:500 clamp(44px,5vw,92px)/.92 var(--sans);letter-spacing:-.065em}
 .b2 .hdr7 h2 span{font-weight:200}
@@ -736,6 +736,18 @@ html.lock{overflow:hidden}
 }
 
 .fp1 .xp1 .stg>.shead{position:absolute;left:0;right:0;top:clamp(56px,8vh,80px)}
+
+/* ===== seam system: every hand-off fades to night and leaves breathing room ===== */
+.b2 .stg7::after{content:"";position:absolute;left:0;right:0;bottom:0;height:14vh;z-index:1;pointer-events:none;background:linear-gradient(rgba(7,7,10,0),var(--night))}
+.prc{position:relative;padding-top:var(--sec-top)}
+.prc::before{content:"";position:absolute;left:0;right:0;top:0;height:40vh;pointer-events:none;z-index:-1;background:radial-gradient(60% 100% at 50% 0,rgba(255,107,69,.07),transparent 70%)}
+.prc{isolation:isolate}
+.voices{padding-bottom:var(--sec-bot)}
+.voices .table::after{content:"";position:absolute;left:0;right:0;bottom:0;height:96px;z-index:55;pointer-events:none;background:linear-gradient(rgba(7,7,10,0),var(--night))}
+.voices .table::before{content:"";position:absolute;left:0;right:0;top:0;height:96px;z-index:55;pointer-events:none;background:linear-gradient(var(--night),rgba(7,7,10,0))}
+.voices .bar{z-index:61}
+.q5{position:relative;padding-top:var(--sec-top)}
+.d4::before{content:"";position:absolute;left:0;right:0;top:0;height:36vh;z-index:9;pointer-events:none;background:linear-gradient(var(--night) 10%,rgba(7,7,10,0))}
 /* ===== final pass: typography + mobile ===== */
 :where(a,button,input,[tabindex]):focus-visible{outline:2px solid var(--c2);outline-offset:3px}
 h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
