@@ -586,6 +586,31 @@ html.lock{overflow:hidden}
 /* ===== responsive pass ===== */
 @media (min-width:861px) and (max-width:1180px){.voices .table{min-height:1000px}}
 @media (min-width:861px) and (max-width:1240px){.e1 .tp{grid-column:1/-1;grid-row:auto;justify-self:end}.e1 .c1{grid-column:6/span 2}.e1 .c2{grid-column:8/span 2}.e1 .c3{grid-column:10/span 3}}
+
+/* ===== compact rhythm pass (client: "feels empty") ===== */
+:root{--sec-top:clamp(32px,5vh,56px);--sec-bot:clamp(48px,7vh,80px)}
+.shead{padding-top:14px;padding-bottom:14px}
+.wtitle{padding:var(--sec-top) var(--pad) clamp(20px,3vh,32px)}
+.wtitle h2{font-size:clamp(44px,5.6vw,108px)}
+.nums .intro{padding:var(--sec-top) var(--pad) clamp(24px,3.5vh,40px)}
+.nums .intro h2{font-size:clamp(38px,4.2vw,80px)}
+.cell{gap:clamp(18px,3.5vh,40px);padding-top:clamp(18px,2.6vh,28px);padding-bottom:clamp(20px,3vh,32px)}
+.clients2{padding:clamp(16px,2.6vh,28px) 0}
+.nums .foot{padding:16px var(--pad) var(--sec-bot)}
+.svcs .pin{height:380vh}
+.voices .table{min-height:780px}
+.voices .head{top:calc(48px + var(--sec-top))}
+.voices .rate{top:calc(52px + var(--sec-top))}
+.b2{height:340vh}
+.b2 .hdr7{padding-top:calc(var(--sec-top) + 30px)}
+.prc,.q5{padding-bottom:var(--sec-bot)}
+.q5 .hc{min-height:600px}
+.d4{height:220vh}
+.e1{padding-top:clamp(48px,7vh,80px)}
+.e1 .gr{row-gap:28px}
+.e1 .leg{margin-top:clamp(36px,5vh,56px)}
+@media (min-width:861px) and (max-width:1180px){.voices .table{min-height:940px}}
+@media (max-width:860px){.svcs .pin{height:280vh}.voices .table{min-height:0;padding-top:220px;padding-bottom:72px}.wtitle .r{margin-top:12px}}
 /* ===== final pass: typography + mobile ===== */
 :where(a,button,input,[tabindex]):focus-visible{outline:2px solid var(--c2);outline-offset:3px}
 h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}
