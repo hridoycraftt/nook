@@ -237,6 +237,19 @@ enum SelfTest {
             check("Prayer times calculate", false)
         }
 
+        // Stockholm at midsummer: the sun never gets 18° below the horizon, yet every prayer
+        // time must still be there (high-latitude rule), in order.
+        let stockholm = TimeZone(identifier: "Europe/Stockholm")!
+        var stockholmCal = Calendar(identifier: .gregorian)
+        stockholmCal.timeZone = stockholm
+        if let june = stockholmCal.date(from: DateComponents(year: 2026, month: 6, day: 21, hour: 12)),
+           let t = PrayerTimes.compute(for: june, latitude: 59.33, longitude: 18.07, timeZone: stockholm, method: .mwl, hanafi: false) {
+            check("High latitude: all prayer times, in order",
+                  t.fajr < t.sunrise && t.sunrise < t.dhuhr && t.dhuhr < t.asr && t.asr < t.maghrib && t.maghrib < t.isha)
+        } else {
+            check("High latitude: all prayer times, in order", false, "none")
+        }
+
         // Special days, bookmarks, updates
         step("Special days, bookmarks, updates")
         let inThree = Calendar.current.date(byAdding: .day, value: 3, to: Date())!
@@ -861,6 +874,10 @@ enum SelfTest {
                                        "precipitation_probability": [10, 70], "weather_code": [1, 61]]
         let hours = WeatherStore.parseHourly(hourJSON, zone: TimeZone(identifier: "Asia/Dhaka")!, now: greg.date(from: DateComponents(year: 2026, month: 11, day: 14, hour: 9))!)
         check("Hourly forecast parses", hours.count == 2 && hours[1].rainChance == 70 && hours[1].symbol == "cloud.rain.fill")
+        let nightJSON: [String: Any] = ["time": ["2026-11-14T22:00"], "temperature_2m": [20.0], "precipitation_probability": [0],
+                                        "weather_code": [0], "is_day": [0]]
+        let night = WeatherStore.parseHourly(nightJSON, zone: TimeZone(identifier: "Asia/Dhaka")!, now: greg.date(from: DateComponents(year: 2026, month: 11, day: 14, hour: 9))!)
+        check("A clear night hour shows a moon", night.first?.symbol == "moon.stars.fill", night.first?.symbol ?? "none")
 
         step("Notification summary")
         let n1 = NotificationMirror.Item(id: 1, bundleID: "com.apple.MobileSMS", appName: "Messages", title: "Ammu", subtitle: "", body: "Come home", date: Date())
