@@ -42,7 +42,7 @@ final class NotificationDigest: ObservableObject {
         return parts.isEmpty ? L("No new notifications") : parts.joined(separator: " · ")
     }
 
-    func reset() { aiSummary = nil }
+    func reset() { if aiSummary != nil { aiSummary = nil } }
 
     func start() {
         guard timer == nil else { return }
@@ -57,7 +57,7 @@ final class NotificationDigest: ObservableObject {
         guard library.digestEnabled, library.notificationsEnabled, library.digestIntervalHours > 0 else { return }
         let last = UserDefaults.standard.object(forKey: lastKey) as? Date ?? now.addingTimeInterval(-Double(library.digestIntervalHours) * 3600)
         guard now.timeIntervalSince(last) >= Double(library.digestIntervalHours) * 3600 else { return }
-        let items = NotificationMirror.shared.recent.filter { ($0.date ?? now) > last }
+        let items = NotificationMirror.shared.lastDay.filter { ($0.date ?? now) > last }
         UserDefaults.standard.set(now, forKey: lastKey)
         guard items.count >= 2 else { return }
         showNow(items: items)
@@ -65,7 +65,7 @@ final class NotificationDigest: ObservableObject {
 
     /// Shows the summary on the island (with the AI sentence when it is available and on).
     func showNow(items: [NotificationMirror.Item]? = nil) {
-        let list = items ?? NotificationMirror.shared.recent
+        let list = items ?? NotificationMirror.shared.lastDay
         let plain = Self.plainSummary(list, hideSenders: UserLibrary.shared.notificationHideContent)
         IslandController.shared.showPeek(.digest(count: list.count, text: plain))
         guard UserLibrary.shared.digestUseAI, AIService.shared.isAvailable, !list.isEmpty,
@@ -108,11 +108,11 @@ struct DigestTile: View {
                 HStack {
                     SectionLabel("Notifications")
                     Spacer(minLength: 4)
-                    Text("\(mirror.recent.count)")
+                    Text("\(mirror.lastDay.count)")
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundStyle(Color.white)
                         .padding(.horizontal, 6).padding(.vertical, 1)
-                        .background(Capsule().fill(mirror.recent.isEmpty ? Color.secondary : Theme.accent))
+                        .background(Capsule().fill(mirror.lastDay.isEmpty ? Color.secondary : Theme.accent))
                 }
                 if !library.notificationsEnabled {
                     Spacer(minLength: 0)
@@ -120,14 +120,14 @@ struct DigestTile: View {
                         .font(.system(size: 10)).foregroundStyle(Color.secondary)
                     Button(L("Settings…")) { SettingsWindowController.shared.show(tab: .notifications) }
                         .buttonStyle(.plain).font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.accent)
-                } else if mirror.recent.isEmpty {
+                } else if mirror.lastDay.isEmpty {
                     Spacer(minLength: 0)
                     Text(L("No new notifications")).font(.system(size: 11)).foregroundStyle(Color.secondary)
                 } else {
                     if let summary = digest.aiSummary {
                         Text(summary).font(.system(size: 11)).lineLimit(3).minimumScaleFactor(0.85)
                     }
-                    ForEach(NotificationDigest.groups(mirror.recent).prefix(digest.aiSummary == nil ? 3 : 1)) { group in
+                    ForEach(NotificationDigest.groups(mirror.lastDay).prefix(digest.aiSummary == nil ? 3 : 1)) { group in
                         HStack(spacing: 6) {
                             if let icon = AppIconCache.icon(bundleID: group.bundleID) {
                                 Image(nsImage: icon).resizable().frame(width: 16, height: 16)
@@ -144,7 +144,7 @@ struct DigestTile: View {
                     HStack {
                         if ai.isAvailable && library.digestUseAI && !library.notificationHideContent {
                             Button {
-                                digest.summarize(mirror.recent)
+                                digest.summarize(mirror.lastDay)
                             } label: {
                                 Label(L(digest.summarizing ? "Summarizing…" : "Summarize"), systemImage: "sparkles")
                             }

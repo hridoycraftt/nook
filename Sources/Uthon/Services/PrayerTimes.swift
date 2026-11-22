@@ -66,17 +66,27 @@ enum PrayerTimes {
         }
 
         let angles = method.angles
-        guard let fajr = sunAngleTime(angles.fajr, 5.0 / 24, ccw: true),
-              let sunrise = sunAngleTime(0.833, 6.0 / 24, ccw: true),
+        // Sunrise and sunset exist everywhere except in polar day or night.
+        guard let sunrise = sunAngleTime(0.833, 6.0 / 24, ccw: true),
               let asr = asrTime(hanafi ? 2 : 1, 13.0 / 24),
               let maghrib = sunAngleTime(0.833, 18.0 / 24, ccw: false) else { return nil }
         let dhuhr = midDay(12.0 / 24)
+        // High latitudes (e.g. London or Stockholm in summer): the sun may never get as low as
+        // the Fajr or Isha angle. Then the usual "angle-based" rule is used: Fajr is at most
+        // angle/60 of the night before sunrise, and Isha at most that much after sunset.
+        let night = 24 - (maghrib - sunrise)
+        func limited(_ time: Double?, from base: Double, angle: Double, before: Bool) -> Double {
+            let portion = angle / 60 * night
+            guard let time else { return before ? base - portion : base + portion }
+            let gap = before ? base - time : time - base
+            return gap > portion || gap.isNaN ? (before ? base - portion : base + portion) : time
+        }
+        let fajr = limited(sunAngleTime(angles.fajr, 5.0 / 24, ccw: true), from: sunrise, angle: angles.fajr, before: true)
         let isha: Double
         if method == .makkah {
             isha = maghrib + 1.5
         } else {
-            guard let value = sunAngleTime(angles.isha, 18.0 / 24, ccw: false) else { return nil }
-            isha = value
+            isha = limited(sunAngleTime(angles.isha, 18.0 / 24, ccw: false), from: maghrib, angle: angles.isha, before: false)
         }
 
         func toDate(_ hours: Double) -> Date {

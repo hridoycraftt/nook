@@ -323,7 +323,6 @@ final class IslandController {
 
     /// Every 30 seconds: meeting reminders and the media key tap (after permission is granted).
     private var notifiedPrayers: Set<String> = []
-    private var announcedDay: String?
 
     private func slowTick() {
         MediaKeyTap.shared.update()
@@ -331,11 +330,12 @@ final class IslandController {
         checkRamadan()
         checkSpecialDays()
         WeatherStore.shared.checkRain()
-        guard AppSettings.shared.peekMeetings, AppSettings.shared.islandEnabled else { return }
+        // Always keep the calendar fresh (the side dock shows it too, island or not).
         let calendar = CalendarStore.shared
         calendar.refresh()
+        guard AppSettings.shared.peekMeetings, AppSettings.shared.islandEnabled else { return }
         let now = Date()
-        for event in calendar.events where !event.isAllDay {
+        for event in calendar.timedEvents {
             let start: Date = event.startDate
             let lead = start.timeIntervalSince(now)
             let key = "\(event.eventIdentifier ?? "")-\(start.timeIntervalSince1970)"
@@ -395,10 +395,15 @@ final class IslandController {
     private func checkSpecialDays() {
         let library = UserLibrary.shared
         guard library.specialDayAlerts, AppSettings.shared.islandEnabled else { return }
-        let today = Calendar.current.startOfDay(for: Date()).description
-        guard announcedDay != today else { return }
-        if let day = library.specialDays.first(where: { $0.daysLeft() == 0 }) {
-            announcedDay = today
+        // Each of today's special days is announced once, also across restarts (it is saved);
+        // with two on the same day, the second follows on the next check.
+        let today = Calendar.current.startOfDay(for: Date()).timeIntervalSince1970
+        let key = "announcedSpecialDays"
+        var done = Set((UserDefaults.standard.stringArray(forKey: key) ?? []).filter { $0.hasPrefix("\(Int(today))|") })
+        guard model.peek == nil else { return }
+        if let day = library.specialDays.first(where: { $0.daysLeft() == 0 && !done.contains("\(Int(today))|\($0.id)") }) {
+            done.insert("\(Int(today))|\(day.id)")
+            UserDefaults.standard.set(Array(done), forKey: key)
             showPeek(.specialDay(name: day.name, symbol: day.symbol), duration: 15)
         }
     }

@@ -124,9 +124,13 @@ struct PeekView: View {
             }
         case .prayer(let name, let time):
             PeekRow(symbol: "moon.stars.fill", tint: Theme.accent, title: L("Time for") + " " + L(name),
-                    subtitle: time.formatted(date: .omitted, time: .shortened)) {
-                Button(L("OK")) { IslandController.shared.dismissPeek() }
-                    .buttonStyle(AccentButtonStyle())
+                    subtitle: Ramadan.clock(time)) {
+                // OK also stops the adhan (if left alone, it plays to the end).
+                Button(L("OK")) {
+                    Ramadan.stopSound()
+                    IslandController.shared.dismissPeek()
+                }
+                .buttonStyle(AccentButtonStyle())
             }
         case .specialDay(let name, let symbol):
             PeekRow(symbol: symbol, tint: Theme.accent, title: L("Today is") + " " + name + " 🎉",

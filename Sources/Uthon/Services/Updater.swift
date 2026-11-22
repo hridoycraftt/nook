@@ -79,16 +79,27 @@ final class Updater: ObservableObject {
         NSWorkspace.shared.open(Self.releasesPage)
     }
 
+    private var foundVersion: String?
+
     func check(silent: Bool = false) {
-        state = .checking
+        // A silent check does not flash "Checking…" over an update already found.
+        if !silent { state = .checking } else if case .available = state {} else { state = .checking }
         Self.latestRelease { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }
                 switch result {
                 case .failure(let error):
+                    // A background check that fails (a network blip) keeps an update already
+                    // found, so the reminders go on.
+                    if silent, case .available = self.state { return }
+                    if silent, let found = self.foundVersion, Self.isNewer(found, than: AppInfo.version) {
+                        self.state = .available(version: found)
+                        return
+                    }
                     self.state = .failed(error.message)
                 case .success(let release):
                     self.dmgURL = release.dmg
+                    self.foundVersion = release.version
                     if Self.isNewer(release.version, than: AppInfo.version) {
                         self.state = .available(version: release.version)
                         if silent { self.remindIfDue() }
@@ -199,9 +210,14 @@ final class Updater: ObservableObject {
     func install() {
         guard let dmgURL else { return }
         state = .downloading
-        URLSession.shared.downloadTask(with: dmgURL) { [weak self] file, _, error in
-            guard let file else {
-                DispatchQueue.main.async { self?.state = .failed(error?.localizedDescription ?? "Download failed") }
+        URLSession.shared.downloadTask(with: dmgURL) { [weak self] file, response, error in
+            let fail: (String) -> Void = { message in DispatchQueue.main.async { self?.state = .failed(message) } }
+            guard let file else { fail(error?.localizedDescription ?? "Download failed"); return }
+            // A missing file comes back as a small web page: never treat that as the update.
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 200
+            let size = (try? FileManager.default.attributesOfItem(atPath: file.path)[.size] as? Int) ?? 0
+            guard status == 200, size > 1_000_000 else {
+                fail(L("The download did not work. Try again or download it from the releases page."))
                 return
             }
             let dmg = FileManager.default.temporaryDirectory.appendingPathComponent("Nook-update.dmg")
@@ -209,46 +225,78 @@ final class Updater: ObservableObject {
             do {
                 try FileManager.default.moveItem(at: file, to: dmg)
             } catch {
-                DispatchQueue.main.async { self?.state = .failed("Could not save the download") }
+                fail("Could not save the download")
                 return
             }
-            DispatchQueue.main.async { self?.replaceAndRelaunch(dmg: dmg) }
+            DispatchQueue.main.async { self?.stageAndRelaunch(dmg: dmg) }
         }.resume()
     }
 
-    private func replaceAndRelaunch(dmg: URL) {
+    /// Two steps. First the new app is copied out of the DMG while Nook keeps running; only if
+    /// that worked does Nook quit, and a small script swaps the apps. If the swap fails, the old
+    /// app is put back and opened again, so Nook never just disappears.
+    private func stageAndRelaunch(dmg: URL) {
         state = .installing
         let current = Bundle.main.bundlePath
         // The app was renamed from Uthon to Nook: move an old "Uthon.app" to "Nook.app".
         let app = (current as NSString).lastPathComponent == "Uthon.app"
             ? ((current as NSString).deletingLastPathComponent as NSString).appendingPathComponent("Nook.app")
             : current
-        let mount = FileManager.default.temporaryDirectory.appendingPathComponent("nook-mount").path
-        let staged = FileManager.default.temporaryDirectory.appendingPathComponent("Nook-new.app").path
-        let script = """
+        let temp = FileManager.default.temporaryDirectory
+        let mount = temp.appendingPathComponent("nook-mount").path
+        let staged = temp.appendingPathComponent("Nook-new.app").path
+        let old = temp.appendingPathComponent("Nook-old.app").path
+        let stage = """
         set -e
         mkdir -p "\(mount)"
         hdiutil attach -nobrowse -readonly -quiet -mountpoint "\(mount)" "\(dmg.path)"
         rm -rf "\(staged)"
         if [ -d "\(mount)/Nook.app" ]; then ditto "\(mount)/Nook.app" "\(staged)"; else ditto "\(mount)/Uthon.app" "\(staged)"; fi
         hdiutil detach -quiet "\(mount)" || true
-        while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.2; done
-        rm -rf "\(app)"
-        if [ "\(current)" != "\(app)" ]; then rm -rf "\(current)"; fi
-        ditto "\(staged)" "\(app)"
-        rm -rf "\(staged)"
-        open "\(app)"
+        test -x "\(staged)/Contents/MacOS/Nook"
         """
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let ok = Self.runShell(stage)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                guard ok else {
+                    self.state = .failed(L("The update could not be opened. Try again or download it from the releases page."))
+                    return
+                }
+                let swap = """
+                while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.2; done
+                rm -rf "\(old)"
+                if mv "\(current)" "\(old)" && ditto "\(staged)" "\(app)"; then
+                  rm -rf "\(old)" "\(staged)"
+                  open "\(app)"
+                else
+                  rm -rf "\(app)"
+                  mv "\(old)" "\(current)"
+                  open "\(current)"
+                fi
+                """
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/bin/sh")
+                process.arguments = ["-c", swap]
+                do {
+                    try process.run()
+                } catch {
+                    self.state = .failed("Could not start the installer")
+                    return
+                }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    private static func runShell(_ script: String) -> Bool {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
         process.arguments = ["-c", script]
-        do {
-            try process.run()
-        } catch {
-            state = .failed("Could not start the installer")
-            return
-        }
-        // Give the script time to copy the new app out of the DMG, then quit so it can swap.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { NSApp.terminate(nil) }
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return false }
+        process.waitUntilExit()
+        return process.terminationStatus == 0
     }
 }

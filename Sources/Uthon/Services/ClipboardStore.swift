@@ -89,6 +89,8 @@ final class ClipboardStore: ObservableObject {
         } else {
             board.setString(item.text, forType: .string)
         }
+        // Our own copy is not a new item: no duplicate, no reordering, no Smart Clip pop-up.
+        lastChange = board.changeCount
     }
 
     func togglePin(_ item: Item) {

@@ -25,6 +25,11 @@ enum LiveRenderer {
     /// The last compile error, for the self-test and diagnostics.
     private(set) static var errors: [LiveStyle: String] = [:]
 
+    static func isReady(_ style: LiveStyle) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return pipelines[style] != nil || errors[style] != nil
+    }
+
     static func pipeline(_ style: LiveStyle) -> MTLRenderPipelineState? {
         lock.lock(); defer { lock.unlock() }
         if let p = pipelines[style] { return p }
@@ -142,6 +147,8 @@ final class LiveMetalView: MTKView, MTKViewDelegate {
                 mouse += (target - mouse) * ease
             }
         }
+        // Not compiled yet (that happens in the background): draw nothing rather than wait.
+        guard LiveRenderer.isReady(style) else { return }
         guard let pass = currentRenderPassDescriptor, let drawable = currentDrawable,
               let buffer = LiveRenderer.queue?.makeCommandBuffer(),
               let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else { return }
@@ -285,6 +292,17 @@ final class LiveWallpaper: ObservableObject {
         } else {
             stopVideo()
             let style = LiveStyle(rawValue: library.liveStyle) ?? .aurora
+            // A style is compiled the first time it is used; do that in the background, and
+            // keep showing the current one until it is ready (no stutter when switching).
+            if !LiveRenderer.isReady(style) {
+                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                    _ = LiveRenderer.pipeline(style)
+                    DispatchQueue.main.async { self?.apply() }
+                }
+                isRunning = true
+                updatePause()
+                return
+            }
             for view in windows.compactMap({ $0.contentView as? LiveMetalView }) {
                 view.style = style
                 view.preferredFramesPerSecond = library.liveFPS

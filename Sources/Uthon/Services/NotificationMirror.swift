@@ -178,8 +178,16 @@ final class NotificationMirror: ObservableObject {
         return bundleID.split(separator: ".").last.map(String.init) ?? bundleID
     }
 
+    /// Notifications of the last 24 hours (also correct when nothing new has come in for a while).
+    var lastDay: [Item] {
+        let since = Date().addingTimeInterval(-86400)
+        return recent.filter { ($0.date ?? .distantPast) > since }
+    }
+
     /// Decide whether to show a notification, then show it.
     func deliver(_ item: Item) {
+        // A summary written before this one arrived is out of date.
+        NotificationDigest.shared.reset()
         let library = UserLibrary.shared
         if !seenApps.contains(item.bundleID) { seenApps.append(item.bundleID) }
         guard library.notificationsEnabled, !library.mutedNotificationApps.contains(item.bundleID),

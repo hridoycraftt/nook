@@ -74,10 +74,12 @@ final class NowPlayingStore: ObservableObject {
         }
     }
 
-    private func runningPlayer() -> (name: String, bundleID: String)? {
+    private func runningPlayers() -> [(name: String, bundleID: String)] {
         // Ask only about the two players (listing every running app is much slower).
-        Self.players.first { !NSRunningApplication.runningApplications(withBundleIdentifier: $0.bundleID).isEmpty }
+        Self.players.filter { !NSRunningApplication.runningApplications(withBundleIdentifier: $0.bundleID).isEmpty }
     }
+
+    private func runningPlayer() -> (name: String, bundleID: String)? { runningPlayers().first }
 
     /// AppleScript talks to another app and can take a while (or hang if that app is busy),
     /// so it always runs on this queue, never on the main thread.
@@ -86,19 +88,26 @@ final class NowPlayingStore: ObservableObject {
     private var refreshAgain = false
 
     func refresh() {
-        guard let player = runningPlayer() else {
+        let running = runningPlayers()
+        guard !running.isEmpty else {
             clear()
             return
         }
         if refreshing { refreshAgain = true; return }
         refreshing = true
-        let source = Self.stateScript(player.name)
         Self.scriptQueue.async { [weak self] in
-            let result = Self.run(source)?.stringValue
+            // With Spotify and Music both open, the one that is playing wins (then the one
+            // with a song loaded), not simply the first one found.
+            var best: (result: String, player: (name: String, bundleID: String))?
+            for player in running {
+                guard let result = Self.run(Self.stateScript(player.name))?.stringValue, !result.isEmpty else { continue }
+                if result.hasPrefix("1") { best = (result, player); break }
+                if best == nil { best = (result, player) }
+            }
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.refreshing = false
-                self.apply(result, player: player)
+                if let best { self.apply(best.result, player: best.player) } else { self.clear() }
                 if self.refreshAgain {
                     self.refreshAgain = false
                     self.refresh()

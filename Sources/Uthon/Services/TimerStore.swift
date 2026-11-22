@@ -107,8 +107,11 @@ final class TimerStore: ObservableObject {
         sound?.play()
         alarmSound = sound
         IslandController.shared.showPeek(.timerDone, duration: 30)
+        // After 20 seconds the alarm ends by itself, completely (sound and "ringing" state),
+        // so the island can close again and the Timer tab is ready for the next one.
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
-            self?.alarmSound?.stop()
+            guard let self, self.alarmSound === sound, self.alarmRinging else { return }
+            self.stopAlarm()
         }
     }
 

@@ -541,14 +541,29 @@ struct WeatherTile: View {
                     }
                 }
             } else {
+                // Say what is really wrong: no city yet, a city that was not found, or no internet.
+                let noCity = AppSettings.shared.weatherCity.trimmingCharacters(in: .whitespaces).isEmpty
                 VStack(alignment: .leading, spacing: 6) {
                     SectionLabel("Weather")
                     Spacer(minLength: 0)
-                    Image(systemName: "cloud.sun.fill").symbolRenderingMode(.multicolor).font(.system(size: 22))
-                    Button(L("Set your city")) { SettingsWindowController.shared.show(tab: .general) }
-                        .buttonStyle(.plain)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Theme.accent)
+                    Image(systemName: weather.problem == .offline && !noCity ? "wifi.slash" : "cloud.sun.fill")
+                        .symbolRenderingMode(.multicolor).font(.system(size: 22))
+                    if !noCity && weather.problem == .offline {
+                        Text(L("Can't load the weather. No internet?"))
+                            .font(.system(size: 10)).foregroundStyle(Color.secondary).lineLimit(2)
+                        Button(L("Try again")) { weather.refresh() }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
+                    } else {
+                        if !noCity && weather.problem == .cityNotFound {
+                            Text(L("City not found")).font(.system(size: 10)).foregroundStyle(Color.secondary).lineLimit(1)
+                        }
+                        Button(L(noCity ? "Set your city" : "Check the city")) { SettingsWindowController.shared.show(tab: .general) }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
+                    }
                 }
             }
         }

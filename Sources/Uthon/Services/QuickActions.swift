@@ -39,13 +39,19 @@ final class QuickActions: ObservableObject {
     }
 
     /// Switches the whole system between light and dark (macOS asks once to allow controlling System Events).
+    /// AppleScript talks to another app (and may wait for a permission prompt), so it never runs
+    /// on the main thread: the island keeps moving meanwhile.
+    private static let scriptQueue = DispatchQueue(label: "nook.quickactions.script", qos: .userInitiated)
+
     func toggleDarkMode() {
         let source = "tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode"
-        var error: NSDictionary?
-        NSAppleScript(source: source)?.executeAndReturnError(&error)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            self?.refresh()
-            AppearanceWatcher.shared.changed()
+        Self.scriptQueue.async {
+            var error: NSDictionary?
+            NSAppleScript(source: source)?.executeAndReturnError(&error)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.refresh()
+                AppearanceWatcher.shared.changed()
+            }
         }
     }
 
@@ -62,8 +68,10 @@ final class QuickActions: ObservableObject {
 
     func emptyTrash() {
         let source = "tell application \"Finder\" to empty trash"
-        var error: NSDictionary?
-        NSAppleScript(source: source)?.executeAndReturnError(&error)
+        Self.scriptQueue.async {
+            var error: NSDictionary?
+            NSAppleScript(source: source)?.executeAndReturnError(&error)
+        }
     }
 
     func open(_ path: String) {

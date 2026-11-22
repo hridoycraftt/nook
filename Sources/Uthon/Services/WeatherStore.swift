@@ -29,8 +29,10 @@ final class WeatherStore: ObservableObject {
         let temperature: Double
         let rainChance: Int
         let code: Int
+        /// Day or night at that hour (a moon after sunset, not a sun).
+        var isDay = true
         var id: Date { time }
-        var symbol: String { WeatherStore.symbol(code: code, isDay: true) }
+        var symbol: String { WeatherStore.symbol(code: code, isDay: isDay) }
     }
 
     @Published private(set) var hourly: [Hour] = []
@@ -41,10 +43,46 @@ final class WeatherStore: ObservableObject {
     @Published private(set) var current: Current?
     /// The city's location, also used for prayer times.
     @Published private(set) var place: Place?
+    /// Why there is no (fresh) weather: the city was not found, or the internet is not there.
+    enum Problem: Equatable { case none, cityNotFound, offline }
+    @Published private(set) var problem: Problem = .none
+    /// Each request is numbered; an older answer that arrives late is ignored.
+    private var generation = 0
     private var timer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
+    // The city's location is kept, so prayer times, Ramadan and sunset dimming work at once
+    // after a restart, even before the internet is back.
+    private static let placeKey = "weatherPlace"
+
+    private func savePlace(_ place: Place, query: String) {
+        UserDefaults.standard.set(["query": query, "city": place.city, "lat": place.latitude, "lon": place.longitude,
+                                   "tz": place.timeZone.identifier], forKey: Self.placeKey)
+    }
+
+    private func loadSavedPlace() {
+        let query = AppSettings.shared.weatherCity.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let saved = UserDefaults.standard.dictionary(forKey: Self.placeKey),
+              (saved["query"] as? String)?.caseInsensitiveCompare(query) == .orderedSame,
+              let city = saved["city"] as? String, let lat = saved["lat"] as? Double, let lon = saved["lon"] as? Double,
+              let zone = (saved["tz"] as? String).flatMap(TimeZone.init(identifier:)) else { return }
+        place = Place(city: city, latitude: lat, longitude: lon, timeZone: zone)
+    }
+
+    private var retryScheduled = false
+
+    /// Offline: try again in a minute instead of waiting for the next 15-minute refresh.
+    private func retrySoon() {
+        guard !retryScheduled else { return }
+        retryScheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [weak self] in
+            self?.retryScheduled = false
+            self?.refresh()
+        }
+    }
+
     func start() {
+        loadSavedPlace()
         refresh()
         // Every 15 minutes, so a rain alert comes in time.
         let t = Timer(timeInterval: 900, repeats: true) { [weak self] _ in self?.refresh() }
@@ -63,9 +101,12 @@ final class WeatherStore: ObservableObject {
 
     func refresh() {
         let city = AppSettings.shared.weatherCity.trimmingCharacters(in: .whitespacesAndNewlines)
+        generation += 1
+        let request = generation
         guard !city.isEmpty else {
             current = nil
             place = nil
+            problem = .none
             return
         }
         var geo = URLComponents(string: "https://geocoding-api.open-meteo.com/v1/search")
@@ -76,23 +117,40 @@ final class WeatherStore: ObservableObject {
         ]
         guard let geoURL = geo?.url else { return }
         Self.fetchJSON(geoURL) { [weak self] json in
-            guard let results = json?["results"] as? [[String: Any]], let first = results.first,
-                  let lat = first["latitude"] as? Double, let lon = first["longitude"] as? Double else { return }
+            guard let self, request == self.generation else { return }      // a newer request is on its way
+            guard let json else {
+                // No internet: keep the saved place (prayer times go on) and say so.
+                if self.problem != .offline { self.problem = .offline }
+                self.retrySoon()
+                return
+            }
+            guard let results = json["results"] as? [[String: Any]], let first = results.first,
+                  let lat = first["latitude"] as? Double, let lon = first["longitude"] as? Double else {
+                // A misspelt city: do not go on showing the previous city's weather and prayers.
+                self.place = nil
+                self.current = nil
+                self.hourly = []
+                self.rainSlots = []
+                self.problem = .cityNotFound
+                return
+            }
             let name = first["name"] as? String ?? city
             let zone = (first["timezone"] as? String).flatMap(TimeZone.init(identifier:)) ?? .current
-            self?.place = Place(city: name, latitude: lat, longitude: lon, timeZone: zone)
-            self?.fetchForecast(lat: lat, lon: lon, city: name)
+            let place = Place(city: name, latitude: lat, longitude: lon, timeZone: zone)
+            if self.place != place { self.place = place }
+            self.savePlace(place, query: city)
+            self.fetchForecast(lat: lat, lon: lon, city: name, request: request)
         }
     }
 
-    private func fetchForecast(lat: Double, lon: Double, city: String) {
+    private func fetchForecast(lat: Double, lon: Double, city: String, request: Int) {
         var comps = URLComponents(string: "https://api.open-meteo.com/v1/forecast")
         comps?.queryItems = [
             URLQueryItem(name: "latitude", value: String(lat)),
             URLQueryItem(name: "longitude", value: String(lon)),
             URLQueryItem(name: "current", value: "temperature_2m,weather_code,is_day"),
             URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min"),
-            URLQueryItem(name: "hourly", value: "temperature_2m,precipitation_probability,weather_code"),
+            URLQueryItem(name: "hourly", value: "temperature_2m,precipitation_probability,weather_code,is_day"),
             URLQueryItem(name: "minutely_15", value: "precipitation"),
             URLQueryItem(name: "forecast_hours", value: "12"),
             URLQueryItem(name: "forecast_minutely_15", value: "16"),
@@ -102,16 +160,23 @@ final class WeatherStore: ObservableObject {
         ]
         guard let url = comps?.url else { return }
         Self.fetchJSON(url) { [weak self] json in
+            guard let self, request == self.generation else { return }
             guard let now = json?["current"] as? [String: Any],
-                  let temp = now["temperature_2m"] as? Double else { return }
-            let zone = self?.place?.timeZone ?? .current
-            self?.hourly = Self.parseHourly(json?["hourly"] as? [String: Any], zone: zone)
-            self?.rainSlots = Self.parseRain(json?["minutely_15"] as? [String: Any], zone: zone)
-            self?.checkRain()
+                  let temp = now["temperature_2m"] as? Double else {
+                // Keep the last reading; the tile says it could not be updated.
+                if self.problem != .offline { self.problem = .offline }
+                self.retrySoon()
+                return
+            }
+            if self.problem != .none { self.problem = .none }
+            let zone = self.place?.timeZone ?? .current
+            self.hourly = Self.parseHourly(json?["hourly"] as? [String: Any], zone: zone)
+            self.rainSlots = Self.parseRain(json?["minutely_15"] as? [String: Any], zone: zone)
+            self.checkRain()
             let daily = json?["daily"] as? [String: Any]
             let high = (daily?["temperature_2m_max"] as? [Double])?.first
             let low = (daily?["temperature_2m_min"] as? [Double])?.first
-            self?.current = Current(
+            self.current = Current(
                 city: city,
                 temperature: temp,
                 code: now["weather_code"] as? Int ?? 0,
@@ -136,12 +201,14 @@ final class WeatherStore: ObservableObject {
         let temps = hourly?["temperature_2m"] as? [Double] ?? []
         let chances = hourly?["precipitation_probability"] as? [Any] ?? []
         let codes = hourly?["weather_code"] as? [Any] ?? []
+        let days = hourly?["is_day"] as? [Any] ?? []
         var result: [Hour] = []
         for (i, text) in times.enumerated() {
             guard let time = parseTime(text, zone: zone), time > now.addingTimeInterval(-3600), i < temps.count else { continue }
             let chance = (chances.indices.contains(i) ? chances[i] as? Int : nil) ?? 0
             let code = (codes.indices.contains(i) ? codes[i] as? Int : nil) ?? 0
-            result.append(Hour(time: time, temperature: temps[i], rainChance: chance, code: code))
+            let day = (days.indices.contains(i) ? days[i] as? Int : nil) ?? 1
+            result.append(Hour(time: time, temperature: temps[i], rainChance: chance, code: code, isDay: day == 1))
         }
         return Array(result.prefix(8))
     }

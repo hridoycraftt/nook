@@ -118,6 +118,7 @@ private struct ClockRow: View {
     static func time(_ date: Date, _ zone: TimeZone) -> String {
         let f = DateFormatter()
         f.timeZone = zone
+        f.locale = Localization.locale
         f.timeStyle = .short
         f.dateStyle = .none
         return f.string(from: date)
@@ -195,15 +196,21 @@ struct PrayerTile: View {
         }
     }
 
+    /// The Mac's own 12/24-hour choice, in Nook's language (Bangla digits in Bangla).
     static func clock(_ date: Date, _ zone: TimeZone) -> String {
         let f = DateFormatter()
         f.timeZone = zone
-        f.dateFormat = "h:mm a"
+        f.locale = Localization.locale
+        f.timeStyle = .short
+        f.dateStyle = .none
         return f.string(from: date)
     }
 
     static func countdown(to date: Date, from now: Date) -> String {
         let minutes = max(0, Int(date.timeIntervalSince(now) / 60))
+        if Localization.isBangla {
+            return minutes >= 60 ? "\(Hijri.digits(minutes / 60)) ঘ \(Hijri.digits(minutes % 60)) মি পরে" : "\(Hijri.digits(minutes)) মি পরে"
+        }
         if minutes >= 60 { return L("in") + " \(minutes / 60)h \(minutes % 60)m" }
         return L("in") + " \(minutes) min"
     }
@@ -218,7 +225,8 @@ struct CountdownTile: View {
         WidgetTile {
             VStack(alignment: .leading, spacing: 6) {
                 SectionLabel("Special Days")
-                let upcoming = library.specialDays.sorted { $0.daysLeft() < $1.daysLeft() }
+                // Past one-off days (a date that has gone by) are not "upcoming".
+                let upcoming = library.specialDays.filter { $0.daysLeft() >= 0 }.sorted { $0.daysLeft() < $1.daysLeft() }
                 if upcoming.isEmpty {
                     Spacer(minLength: 0)
                     Image(systemName: "gift.fill").font(.system(size: 20)).foregroundStyle(Theme.accent)

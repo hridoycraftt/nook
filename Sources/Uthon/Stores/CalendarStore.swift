@@ -9,6 +9,9 @@ final class CalendarStore: ObservableObject {
     private let store = EKEventStore()
     @Published private(set) var access: Access = .notDetermined
     @Published private(set) var events: [EKEvent] = []
+    /// Every timed (not all-day) event still to come today and tomorrow, for meeting reminders
+    /// (the 4 shown above can be all-day ones).
+    private(set) var timedEvents: [EKEvent] = []
 
     private init() {
         updateAccess()
@@ -53,12 +56,14 @@ final class CalendarStore: ObservableObject {
             let start = cal.startOfDay(for: now)
             guard let end = cal.date(byAdding: .day, value: 2, to: start) else { return }
             let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
-            let upcoming = Array(store.events(matching: predicate)
+            let all = store.events(matching: predicate)
                 .filter { $0.endDate > now }
                 .sorted { $0.startDate < $1.startDate }
-                .prefix(4))
+            let upcoming = Array(all.prefix(4))
+            let timed = all.filter { !$0.isAllDay }
             DispatchQueue.main.async {
                 guard let self else { return }
+                self.timedEvents = timed
                 func key(_ e: [EKEvent]) -> [String] {
                     e.map { "\($0.eventIdentifier ?? "")|\($0.startDate.timeIntervalSince1970)|\($0.endDate.timeIntervalSince1970)|\($0.title ?? "")" }
                 }
