@@ -13,7 +13,7 @@ final class Updater: ObservableObject {
     private var dmgURL: URL?
     private var timer: Timer?
 
-    static let repo = "hridoycraftt/uthon"
+    static let repo = "hridoycraftt/nook"   // renamed from "uthon" (GitHub redirects the old name)
     static let releasesPage = URL(string: "https://github.com/\(repo)/releases/latest")!
     private static let apiURL = URL(string: "https://api.github.com/repos/\(repo)/releases/latest")!
 
