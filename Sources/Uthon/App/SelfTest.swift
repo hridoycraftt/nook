@@ -375,6 +375,11 @@ enum SelfTest {
         check("A device on a cable shows as charging", cabledFound.first { $0.name == "Magic Keyboard" }?.charging == true,
               cabledFound.map { "\($0.name) \($0.percent) \($0.charging)" }.joined(separator: ", "))
         check("A device on Bluetooth alone is not charging", cabledFound.first { $0.name == "Magic Mouse" }?.charging == false)
+        let charged = (level: 96, at: Date().addingTimeInterval(-120))
+        check("After unplugging, an old low reading is not believed", DeviceBatteryStore.believable(reading: 4, last: charged) == 96)
+        check("A charging rise is taken at once", DeviceBatteryStore.believable(reading: 60, last: (level: 20, at: Date())) == 60)
+        check("Normal slow drain is taken", DeviceBatteryStore.believable(reading: 94, last: (level: 96, at: Date().addingTimeInterval(-3600))) == 94)
+        check("An old memory gives way", DeviceBatteryStore.believable(reading: 40, last: (level: 96, at: Date().addingTimeInterval(-13 * 3600))) == 40)
         check("Charging flag is read", DeviceBatteryStore.isCharging(transport: "Bluetooth", flags: 3)
               && !DeviceBatteryStore.isCharging(transport: "Bluetooth", flags: 0))
         check("Bluetooth addresses are recognised", DeviceBatteryStore.normalizeAddress("10-CF-0F-E5-D4-DA") == "10:cf:0f:e5:d4:da")

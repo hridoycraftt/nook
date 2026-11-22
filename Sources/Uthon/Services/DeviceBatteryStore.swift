@@ -131,7 +131,8 @@ final class DeviceBatteryStore: ObservableObject {
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.inFlight = false
-                if self.devices != found { self.devices = found }
+                let steady = self.stabilize(found)
+                if self.devices != steady { self.devices = steady }
                 self.report = lines
                 if self.connectedWithoutLevel != withoutLevel { self.connectedWithoutLevel = withoutLevel }
                 self.lastChecked = Date()
@@ -140,6 +141,55 @@ final class DeviceBatteryStore: ObservableObject {
                 self.scheduleDeviceTimer()
             }
         }
+    }
+
+    // MARK: Old readings
+
+    /// The last level we trust for each device (by address and by name), with when it was seen.
+    /// Saved, so it also holds across restarts.
+    private static let memoryKey = "deviceBatteryMemory"
+    private var memory: [String: [String: Double]] = UserDefaults.standard.dictionary(forKey: memoryKey) as? [String: [String: Double]] ?? [:]
+
+    /// The level to believe, given a new reading and the last trusted one.
+    ///
+    /// After a keyboard or mouse has charged on a cable and the cable comes out, macOS goes on
+    /// reporting the level from before charging until the device sends a fresh one (that can
+    /// take a long while). These batteries lose only a few percent a day, so a reading that
+    /// falls far below the last trusted level within hours is an old one: the trusted level is
+    /// kept until the readings agree again. Rises (charging) are always taken at once.
+    static func believable(reading: Int, last: (level: Int, at: Date)?, now: Date = Date()) -> Int {
+        guard let last else { return reading }
+        let hours = max(0, now.timeIntervalSince(last.at) / 3600)
+        guard hours < 12 else { return reading }            // too old to judge: take the reading
+        let allowedDrop = 3 + hours * 2                       // generous: real drain is far slower
+        return Double(last.level - reading) > allowedDrop ? last.level : reading
+    }
+
+    private func stabilize(_ found: [Device]) -> [Device] {
+        let now = Date()
+        var result: [Device] = []
+        for var device in found {
+            let keys = [device.address.map { "a:" + $0 }, "n:" + device.name.lowercased()].compactMap { $0 }
+            let last = keys.lazy.compactMap { self.memory[$0] }.first
+                .flatMap { entry -> (level: Int, at: Date)? in
+                    guard let level = entry["level"], let at = entry["at"] else { return nil }
+                    return (Int(level), Date(timeIntervalSince1970: at))
+                }
+            let reading = device.percent
+            let level = Self.believable(reading: reading, last: last, now: now)
+            let accepted = level == reading
+            if !accepted {
+                device = Device(name: device.name, percent: level, address: device.address,
+                                nameIsGuess: device.nameIsGuess, charging: device.charging)
+            }
+            // An accepted reading is remembered with the time now; a kept level keeps its old
+            // time, so it gives way after a while if the device really is lower.
+            let stamp = accepted ? now : (last?.at ?? now)
+            for key in keys { memory[key] = ["level": Double(level), "at": stamp.timeIntervalSince1970] }
+            result.append(device)
+        }
+        UserDefaults.standard.set(memory, forKey: Self.memoryKey)
+        return result
     }
 
     /// Names of connected Bluetooth devices, whether or not they report a battery.
