@@ -25,7 +25,9 @@ final class MediaKeyTap {
     /// Turn the tap on or off to match the settings. Safe to call often.
     func update(prompt: Bool = false) {
         let s = AppSettings.shared
-        if s.replaceSystemHUD && s.islandEnabled {
+        // Replacing the macOS pop-up only makes sense while Nook shows its own; otherwise the
+        // keys would give no feedback at all.
+        if s.replaceSystemHUD && s.islandEnabled && s.hudEnabled {
             enable(prompt: prompt)
         } else {
             disable()

@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 /// Changes the desktop picture once a day (or on demand): beautiful built-in gradients,
 /// or a random picture from a folder the user picks.
@@ -19,7 +20,20 @@ final class WallpaperChanger {
         (NSColor(red: 0.95, green: 0.60, blue: 0.55, alpha: 1), NSColor(red: 0.98, green: 0.85, blue: 0.65, alpha: 1)),
     ]
 
+    private var cancellables = Set<AnyCancellable>()
+
     func start() {
+        // A new choice (gradients, or a folder) shows at once, not tomorrow.
+        let library = UserLibrary.shared
+        Publishers.Merge(library.$wallpaperSource.dropFirst().map { _ in () },
+                         library.$wallpaperFolder.dropFirst().map { _ in () })
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .sink { [weak self] in
+                guard UserLibrary.shared.wallpaperSource != .off else { return }
+                UserDefaults.standard.set(Calendar.current.startOfDay(for: Date()).timeIntervalSince1970, forKey: "wallpaperLastDay")
+                self?.next()
+            }
+            .store(in: &cancellables)
         let t = Timer(timeInterval: 1800, repeats: true) { [weak self] _ in self?.dailyCheck() }
         RunLoop.main.add(t, forMode: .common)
         timer = t

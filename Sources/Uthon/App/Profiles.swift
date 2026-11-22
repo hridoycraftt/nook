@@ -2,27 +2,28 @@ import SwiftUI
 
 /// Built-in layout presets and the user's saved profiles.
 enum Profiles {
+    // Fixed ids, so the profile in use is still known after a restart.
     static let presets: [LayoutProfile] = [
         LayoutProfile(
-            name: "Study", symbol: "book.fill",
+            id: UUID(uuidString: "6E6F6F6B-0000-4000-8000-000000000001")!, name: "Study", symbol: "book.fill",
             homePages: [["calendar", "todo", "notes", "countdown", "controls"], ["worldClock", "bookmarks", "system"]],
             controls: ["focusTimer", "keepAwake", "appearance", "sound", "screenshot", "sleepDisplay"],
             tabs: ["home", "timer", "notes", "search", "clipboard"], hiddenTabs: ["mirror", "shelf"],
             theme: ThemeColor.lavender.rawValue, builtIn: true),
         LayoutProfile(
-            name: "Office", symbol: "briefcase.fill",
+            id: UUID(uuidString: "6E6F6F6B-0000-4000-8000-000000000002")!, name: "Office", symbol: "briefcase.fill",
             homePages: [["calendar", "weather", "todo", "system", "batteries"], ["bookmarks", "worldClock", "shortcuts", "notes"]],
             controls: ["keepAwake", "screenshot", "sleepDisplay", "sound", "colorPicker", "activityMonitor", "screenRecording", "focusTimer"],
             tabs: ["home", "controls", "search", "clipboard", "shelf", "timer", "notes", "mirror"], hiddenTabs: [],
             theme: ThemeColor.ocean.rawValue, builtIn: true),
         LayoutProfile(
-            name: "Music", symbol: "music.note",
+            id: UUID(uuidString: "6E6F6F6B-0000-4000-8000-000000000003")!, name: "Music", symbol: "music.note",
             homePages: [["music", "weather", "shortcuts", "controls"]],
             controls: ["sound", "appearance", "keepAwake", "screenshot", "sleepDisplay", "emptyTrash"],
             tabs: ["home", "controls", "search", "shelf"], hiddenTabs: ["clipboard", "notes", "mirror", "timer"],
             theme: ThemeColor.rose.rawValue, builtIn: true),
         LayoutProfile(
-            name: "Family", symbol: "house.fill",
+            id: UUID(uuidString: "6E6F6F6B-0000-4000-8000-000000000004")!, name: "Family", symbol: "house.fill",
             homePages: [["music", "calendar", "countdown", "prayer"], ["weather", "worldClock", "bookmarks", "todo", "notes"]],
             controls: ["keepAwake", "appearance", "sound", "screenshot", "sleepDisplay", "emptyTrash"],
             tabs: ["home", "controls", "search", "shelf", "timer", "clipboard", "notes", "mirror"], hiddenTabs: [],
@@ -34,7 +35,10 @@ enum Profiles {
     static func apply(_ profile: LayoutProfile) {
         let settings = AppSettings.shared
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) {
-            settings.homePages = profile.homePages.isEmpty ? [HomeWidget.defaults.map(\.rawValue)] : profile.homePages
+            let pages = profile.homePages.isEmpty ? [HomeWidget.defaults.map(\.rawValue)] : profile.homePages
+            // Old sizes could make widgets of this layout silently not fit: start from their own sizes.
+            for page in pages { for item in page { settings.widgetSizes[item] = nil } }
+            settings.homePages = pages
             settings.enabledControls = Set(profile.controls)
             settings.controlOrder = profile.controls + ControlKind.allCases.map(\.rawValue).filter { !profile.controls.contains($0) }
             settings.islandTabOrder = profile.tabs + IslandTab.allCases.map(\.rawValue).filter { !profile.tabs.contains($0) }
@@ -83,6 +87,10 @@ final class OnboardingWindowController {
     private var window: NSWindow?
 
     func show() {
+        // Seen once is enough: closing it with the red button must not bring it back at every launch.
+        AppSettings.shared.onboardingDone = true
+        // A fresh guide each time (it starts again at the first step).
+        if window?.isVisible != true { window = nil }
         if window == nil {
             let hosting = NSHostingController(rootView: OnboardingView())
             let w = NSWindow(contentViewController: hosting)

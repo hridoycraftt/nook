@@ -79,9 +79,12 @@ final class CareReminders: ObservableObject {
     }
 
     private func fire(_ kind: Kind) {
+        let settings = AppSettings.shared
+        // Nowhere to show the card (island and side dock both off): do not leave a reminder
+        // waiting that nothing can close.
+        guard settings.islandEnabled || settings.sideDockEnabled else { return }
         active = kind
         NSSound(named: "Glass")?.play()
-        let settings = AppSettings.shared
         if settings.islandEnabled {
             IslandController.shared.expand()
         } else if settings.sideDockEnabled {

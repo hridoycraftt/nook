@@ -23,9 +23,15 @@ final class HotKey {
             handlerInstalled = true
         }
         let id = EventHotKeyID(signature: OSType(0x5554_484E), id: 1)   // "UTHN"
-        RegisterEventHotKey(UInt32(kVK_Space), UInt32(controlKey | optionKey), id,
-                            GetApplicationEventTarget(), 0, &hotKeyRef)
+        let status = RegisterEventHotKey(UInt32(kVK_Space), UInt32(controlKey | optionKey), id,
+                                         GetApplicationEventTarget(), 0, &hotKeyRef)
+        // Another app may already use ⌃⌥Space: Settings says so instead of a dead switch.
+        registrationFailed = status != noErr
+        if registrationFailed { hotKeyRef = nil }
     }
+
+    /// True when ⌃⌥Space could not be taken (another app has it).
+    private(set) var registrationFailed = false
 
     private func unregister() {
         if let hotKeyRef { UnregisterEventHotKey(hotKeyRef) }

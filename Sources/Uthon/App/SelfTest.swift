@@ -1175,6 +1175,24 @@ enum SelfTest {
         }
     }
 
+    private static func profileChecks() {
+        step("Profiles")
+        let settings = AppSettings.shared
+        let savedPages = settings.homePages, savedSizes = settings.widgetSizes
+        let savedActive = UserLibrary.shared.activeProfile
+        settings.widgetSizes["calendar"] = 3
+        if let study = Profiles.presets.first(where: { $0.name == "Study" }) {
+            Profiles.apply(study)
+            let shown = settings.homeItems(page: 0).map(\.rawValue)
+            check("Applying a profile shows all its widgets", shown == study.homePages[0], shown.joined(separator: ","))
+            check("A built-in profile keeps its id after a restart",
+                  study.id == UUID(uuidString: "6E6F6F6B-0000-4000-8000-000000000001"))
+        }
+        settings.homePages = savedPages
+        settings.widgetSizes = savedSizes
+        UserLibrary.shared.activeProfile = savedActive
+    }
+
     private static func settingsSearchChecks() {
         step("Settings search")
         func pages(_ q: String) -> Set<SettingsTab> { Set(SettingsSearch.results(q).map(\.tab)) }
@@ -1234,6 +1252,7 @@ enum SelfTest {
     }
 
     private static func onlineChecks() {
+        profileChecks()
         settingsSearchChecks()
         settingsSpeed()
         step("Online sources")

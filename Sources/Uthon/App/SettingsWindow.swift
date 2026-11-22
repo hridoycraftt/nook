@@ -161,6 +161,8 @@ final class SettingsWindowController {
 
 enum LoginItem {
     static var isEnabled: Bool { SMAppService.mainApp.status == .enabled }
+    /// macOS wants the user to allow it in System Settings → General → Login Items.
+    static var needsApproval: Bool { SMAppService.mainApp.status == .requiresApproval }
 
     static func set(_ enabled: Bool) {
         do {
@@ -202,7 +204,7 @@ struct SettingsView: View {
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 760, minHeight: 520)
-        .id(settings.lookKey)
+        .id(settings.settingsLookKey)
         .environment(\.locale, Localization.locale)
     }
 
@@ -312,13 +314,33 @@ private struct GeneralSettings: View {
     @ObservedObject private var library = UserLibrary.shared
     @ObservedObject private var updater = Updater.shared
     @State private var openAtLogin = LoginItem.isEnabled
+    @State private var hotkeyTaken = HotKey.shared.registrationFailed
 
     var body: some View {
         Form {
             Section(L("Startup & shortcut")) {
                 Toggle(L("Open at login"), isOn: $openAtLogin)
-                    .onChange(of: openAtLogin) { _, newValue in LoginItem.set(newValue) }
+                    .onChange(of: openAtLogin) { _, newValue in
+                        LoginItem.set(newValue)
+                        // Show what really happened (macOS can refuse or ask for approval).
+                        let real = LoginItem.isEnabled
+                        if real != openAtLogin && !LoginItem.needsApproval { openAtLogin = real }
+                    }
+                if LoginItem.needsApproval {
+                    HStack {
+                        Text(L("macOS needs your OK in Login Items.")).font(.footnote).foregroundStyle(.orange)
+                        Spacer()
+                        Button(L("Open Login Items")) { SMAppService.openSystemSettingsLoginItems() }
+                    }
+                }
                 Toggle(L("⌃⌥Space opens the island from anywhere"), isOn: $settings.hotkeyEnabled)
+                    .onChange(of: settings.hotkeyEnabled) { _, _ in
+                        DispatchQueue.main.async { hotkeyTaken = HotKey.shared.registrationFailed }
+                    }
+                if settings.hotkeyEnabled && hotkeyTaken {
+                    Text(L("Another app already uses ⌃⌥Space, so it cannot open the island."))
+                        .font(.footnote).foregroundStyle(.orange)
+                }
                 Button(L("Show the welcome guide again")) { OnboardingWindowController.shared.show() }
             }
             Section(L("City (weather and prayer times)")) {
@@ -820,6 +842,7 @@ private struct AlertsSettings: View {
         Form {
             Section {
                 Toggle(L("Show a pop-up when volume or brightness changes"), isOn: $settings.hudEnabled)
+                    .onChange(of: settings.hudEnabled) { _, _ in MediaKeyTap.shared.update() }
                 Toggle(L("Scroll up/down on the island changes the volume"), isOn: $settings.scrollVolume)
                 Toggle(L("Replace the macOS volume/brightness popup"), isOn: $settings.replaceSystemHUD)
                     .disabled(!settings.hudEnabled)
@@ -921,9 +944,9 @@ private struct ProfileRow: View {
             Spacer()
             if active {
                 Text(L("In use ✓")).foregroundStyle(Theme.accent).font(.footnote.weight(.semibold))
-            } else {
-                Button(L("Use")) { Profiles.apply(profile) }
             }
+            // Always there: after changing Home, the profile can be put back as it was.
+            Button(L(active ? "Use again" : "Use")) { Profiles.apply(profile) }
         }
     }
 }

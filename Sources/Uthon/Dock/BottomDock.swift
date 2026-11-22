@@ -168,6 +168,11 @@ final class BottomDockController: ObservableObject {
 
     static var height: CGFloat { baseHeight * scale }
 
+    /// "Automatically hide and show the Dock" is on.
+    static var dockAutoHides: Bool {
+        UserDefaults(suiteName: "com.apple.dock")?.bool(forKey: "autohide") ?? false
+    }
+
     /// The screen with the macOS Dock (the primary one when unsure).
     static func dockScreen() -> NSScreen? {
         NSScreen.screens.first { $0.visibleFrame.minY > $0.frame.minY + 1 } ?? NSScreen.screens.first
@@ -285,7 +290,12 @@ final class BottomDockController: ObservableObject {
             hide()
             return
         }
-        if force || dockFrame == nil {
+        if Self.dockAutoHides {
+            // A hidden Dock: there is nothing to sit beside, so the bar goes to its corner.
+            if dockFrame != nil { dockFrame = nil }
+            if exactDock { exactDock = false }
+            lastDockCheck = Date()
+        } else if force || dockFrame == nil {
             let exact = Self.readDockFrame()
             dockFrame = exact ?? Self.estimatedDockFrame(on: screen)
             if exactDock != (exact != nil) { exactDock = exact != nil }

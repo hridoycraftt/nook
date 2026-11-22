@@ -100,6 +100,12 @@ extension Color {
 
 extension AppSettings {
     /// A key that changes whenever the look changes, used to refresh every view at once.
+    /// The same, without the custom colour: the Settings window is not rebuilt while the
+    /// colour panel is being dragged (that would break the colour picker after one change).
+    var settingsLookKey: String {
+        "\(themeColor.rawValue)-\(language.rawValue)-\(tintGlass)-\(appearance.rawValue)-\(glassClarity.rawValue)-\(systemAppearanceTick)"
+    }
+
     var lookKey: String {
         "\(themeColor.rawValue)-\(customAccentHex)-\(language.rawValue)-\(tintGlass)-\(appearance.rawValue)-\(glassClarity.rawValue)-\(systemAppearanceTick)"
     }
@@ -187,8 +193,9 @@ extension AppSettings {
             widgetSizes[item.rawValue] = size
             return true
         }
-        let others = page(index).compactMap(HomeItem.init(rawValue:)).filter { $0 != item }
-        var sizes = Dictionary(uniqueKeysWithValues: others.map { ($0.rawValue, slots(of: $0)) })
+        // Only what is really shown on the page counts (never a duplicate twice).
+        let others = homeItems(page: index).filter { $0 != item }
+        var sizes = Dictionary(others.map { ($0.rawValue, slots(of: $0)) }, uniquingKeysWith: { first, _ in first })
         var total = sizes.values.reduce(0, +) + size
         while total > HomeWidget.maxSlots {
             // Shrink the biggest neighbour that can still get smaller.

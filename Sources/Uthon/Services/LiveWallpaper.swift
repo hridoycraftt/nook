@@ -280,6 +280,12 @@ final class LiveWallpaper: ObservableObject {
         guard library.liveEnabled else { teardown(); return }
         let mode = LiveMode(rawValue: library.liveMode) ?? .live
         if mode == .video && library.videoPath.isEmpty { teardown(); return }
+        // The video was moved or deleted: no black desktop, and Settings says what happened.
+        if mode == .video && !FileManager.default.fileExists(atPath: library.videoPath) {
+            teardown()
+            pauseReason = "Video not found"
+            return
+        }
         // Rebuild when the screens or the kind of content changed.
         let wantsVideo = mode == .video
         let haveVideo = windows.first?.contentView is LiveVideoView
@@ -398,6 +404,12 @@ final class LiveWallpaper: ObservableObject {
 
     func updatePause() {
         guard !windows.isEmpty else { return }
+        // A video that cannot be played (damaged, or removed while playing).
+        if player?.currentItem?.status == .failed {
+            teardown()
+            pauseReason = "Video not found"
+            return
+        }
         let library = UserLibrary.shared
         let visible = windows.map { $0.occlusionState.contains(.visible) }
         let reason = Self.pauseReason(asleep: screensAsleep, battery: testOnBattery ?? Self.onBattery,
