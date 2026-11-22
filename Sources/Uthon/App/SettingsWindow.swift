@@ -1137,6 +1137,10 @@ private struct BatteriesSection: View {
                             Image(systemName: device.symbol).frame(width: 20)
                             Text(device.name)
                             Spacer()
+                            if device.charging {
+                                Label(L("Charging"), systemImage: "bolt.fill")
+                                    .font(.footnote).foregroundStyle(.green)
+                            }
                             Text("\(device.percent)%").monospacedDigit()
                         }
                     }

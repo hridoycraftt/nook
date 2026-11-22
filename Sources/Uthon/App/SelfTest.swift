@@ -350,6 +350,20 @@ enum SelfTest {
         ]]
         let nestedData = (try? PropertyListSerialization.data(fromPropertyList: nested, format: .xml, options: 0)) ?? Data()
         check("Battery on a child entry uses the parent's name", DeviceBatteryStore.parseRegistry(nestedData).first.map { "\($0.name) \($0.percent)" } == "Magic Mouse 77")
+        let cabled: [[String: Any]] = [[
+            "IOClass": "IOUSBHostDevice", "Product": "Magic Keyboard", "Transport": "USB",
+            "IORegistryEntryChildren": [["IOClass": "AppleDeviceManagementHIDEventService", "BatteryPercent": 63]],
+        ], [
+            "IOClass": "AppleDeviceManagementHIDEventService", "Product": "Magic Mouse", "Transport": "Bluetooth",
+            "BatteryPercent": 40, "BatteryStatusFlags": 0,
+        ]]
+        let cabledData = (try? PropertyListSerialization.data(fromPropertyList: cabled, format: .xml, options: 0)) ?? Data()
+        let cabledFound = DeviceBatteryStore.parseRegistry(cabledData)
+        check("A device on a cable shows as charging", cabledFound.first { $0.name == "Magic Keyboard" }?.charging == true,
+              cabledFound.map { "\($0.name) \($0.percent) \($0.charging)" }.joined(separator: ", "))
+        check("A device on Bluetooth alone is not charging", cabledFound.first { $0.name == "Magic Mouse" }?.charging == false)
+        check("Charging flag is read", DeviceBatteryStore.isCharging(transport: "Bluetooth", flags: 3)
+              && !DeviceBatteryStore.isCharging(transport: "Bluetooth", flags: 0))
         check("Bluetooth addresses are recognised", DeviceBatteryStore.normalizeAddress("10-CF-0F-E5-D4-DA") == "10:cf:0f:e5:d4:da")
         check("Real names are not mistaken for addresses", DeviceBatteryStore.normalizeAddress("Magic Mouse") == nil)
         check("Keyboard guessed from Bluetooth class", DeviceBatteryStore.guessName(major: 0x05, minor: 0x10) == "Keyboard")

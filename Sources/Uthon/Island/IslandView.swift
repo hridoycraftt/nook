@@ -360,18 +360,23 @@ private struct IslandHeader: View {
     @ViewBuilder private func rightGroups(dockButton: Bool) -> some View {
         ViewThatFits(in: .horizontal) {
             if hijriOn {
-                rightGroup(hijri: .full, weather: true, batteries: true, dockButton: dockButton)
-                rightGroup(hijri: .short, weather: true, batteries: true, dockButton: dockButton)
-                rightGroup(hijri: .short, weather: true, batteries: false, dockButton: dockButton)
-                rightGroup(hijri: .short, weather: false, batteries: false, dockButton: dockButton)
-                rightGroup(hijri: .short, weather: false, batteries: false, clock: false, dockButton: dockButton)
+                rightGroup(hijri: .full, weather: true, batteries: .all, dockButton: dockButton)
+                rightGroup(hijri: .short, weather: true, batteries: .all, dockButton: dockButton)
+                rightGroup(hijri: .short, weather: true, batteries: .one, dockButton: dockButton)
+                rightGroup(hijri: .short, weather: false, batteries: .one, dockButton: dockButton)
+                rightGroup(hijri: .short, weather: false, batteries: .none, dockButton: dockButton)
+                rightGroup(hijri: .short, weather: false, batteries: .none, clock: false, dockButton: dockButton)
             } else {
-                rightGroup(weather: true, batteries: true, dockButton: dockButton)
-                rightGroup(weather: true, batteries: false, dockButton: dockButton)
-                rightGroup(weather: false, batteries: false, dockButton: dockButton)
+                // Batteries stay longer than the weather: a low mouse or keyboard matters more.
+                rightGroup(weather: true, batteries: .all, dockButton: dockButton)
+                rightGroup(weather: true, batteries: .one, dockButton: dockButton)
+                rightGroup(weather: false, batteries: .all, dockButton: dockButton)
+                rightGroup(weather: false, batteries: .one, dockButton: dockButton)
+                rightGroup(weather: false, batteries: .none, dockButton: dockButton)
             }
-            rightGroup(weather: false, batteries: false, clock: false, dockButton: dockButton)
-            rightGroup(weather: false, batteries: false, clock: false, dockButton: false)
+            rightGroup(weather: false, batteries: .one, clock: false, dockButton: dockButton)
+            rightGroup(weather: false, batteries: .none, clock: false, dockButton: dockButton)
+            rightGroup(weather: false, batteries: .none, clock: false, dockButton: false)
         }
         // A fresh layout whenever the setting flips: no items left half-moved.
         .id(hijriOn ? hijriFull + hijriShort : "off")
@@ -479,7 +484,22 @@ private struct IslandHeader: View {
         .padding(.horizontal, inset)
     }
 
-    private func rightGroup(hijri: HijriStyle = .none, weather showWeather: Bool, batteries showBatteries: Bool,
+    private enum BatteryChips { case none, one, all }
+
+    private func batteryChip(_ device: DeviceBatteryStore.Device) -> some View {
+        HStack(spacing: 2) {
+            Image(systemName: device.symbol).font(.system(size: 10))
+            Text("\(device.percent)%").font(.system(size: 10, weight: .semibold)).monospacedDigit().lineLimit(1)
+            if device.charging {
+                Image(systemName: "bolt.fill").font(.system(size: 8, weight: .bold)).foregroundStyle(Color.green)
+            }
+        }
+        .fixedSize()
+        .foregroundStyle(device.percent <= 15 && !device.charging ? Color.red : Color.secondary)
+        .help("\(device.name): \(device.percent)%" + (device.charging ? " · " + L("Charging") : ""))
+    }
+
+    private func rightGroup(hijri: HijriStyle = .none, weather showWeather: Bool, batteries showBatteries: BatteryChips,
                             clock: Bool = true, dockButton: Bool = true) -> some View {
         HStack(spacing: 8) {
             if model.tab == .home || model.tab == .controls {
@@ -518,16 +538,16 @@ private struct IslandHeader: View {
                 .fixedSize()
                 .help(w.city)
             }
-            if showBatteries {
-                ForEach(batteries.devices.prefix(2)) { device in
-                    HStack(spacing: 3) {
-                        Image(systemName: device.symbol).font(.system(size: 10))
-                        Text("\(device.percent)%").font(.system(size: 10, weight: .semibold)).monospacedDigit().lineLimit(1)
-                    }
-                    .fixedSize()
-                    .foregroundStyle(device.percent <= 15 ? Color.red : Color.secondary)
-                    .help("\(device.name): \(device.percent)%")
+            switch showBatteries {
+            case .all:
+                ForEach(batteries.devices.prefix(3)) { batteryChip($0) }
+            case .one:
+                // The one that needs attention: the emptiest (not charging) first.
+                if let device = batteries.devices.min(by: { ($0.charging ? 1000 : 0) + $0.percent < ($1.charging ? 1000 : 0) + $1.percent }) {
+                    batteryChip(device)
                 }
+            case .none:
+                EmptyView()
             }
             if clock {
                 TimelineView(.periodic(from: .now, by: 1)) { context in

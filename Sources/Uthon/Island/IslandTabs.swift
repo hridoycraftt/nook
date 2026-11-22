@@ -669,7 +669,7 @@ struct BatteriesTile: View {
         if let mac = DeviceBatteryStore.internalBattery() {
             list.append(Entry(id: "mac", name: "Mac", symbol: "laptopcomputer", percent: mac.percent, charging: mac.pluggedIn))
         }
-        list += store.devices.map { Entry(id: $0.id, name: $0.name, symbol: $0.symbol, percent: $0.percent, charging: false) }
+        list += store.devices.map { Entry(id: $0.id, name: $0.name, symbol: $0.symbol, percent: $0.percent, charging: $0.charging) }
         return list
     }
 

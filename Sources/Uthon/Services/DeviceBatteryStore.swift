@@ -16,6 +16,8 @@ final class DeviceBatteryStore: ObservableObject {
         var address: String? = nil
         /// True when the name is only a guess ("Keyboard") because macOS did not give one.
         var nameIsGuess = false
+        /// Plugged in to charge (cable or power), when a source tells us.
+        var charging = false
         var id: String { address ?? name }
         var symbol: String { DeviceBatteryStore.symbol(for: name) }
     }
@@ -50,15 +52,23 @@ final class DeviceBatteryStore: ObservableObject {
     private var powerTimer: Timer?
     private var lastCharging: Bool?
 
+    /// Every 5 minutes; every minute while something charges (so the level climbs visibly).
+    private func scheduleDeviceTimer() {
+        let interval: TimeInterval = devices.contains { $0.charging } ? 60 : 300
+        guard deviceTimer?.timeInterval != interval else { return }
+        deviceTimer?.invalidate()
+        let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in self?.refreshDevices() }
+        RunLoop.main.add(t, forMode: .common)
+        deviceTimer = t
+    }
+
     func start() {
         refreshDevices()
         // A mouse or keyboard that connects (or wakes up) is picked up at once, not at the next
         // five-minute check. Its battery level appears a moment after it connects, so look a
         // few times.
         watcher.start { [weak self] in self?.deviceConnectionChanged() }
-        let t = Timer(timeInterval: 300, repeats: true) { [weak self] _ in self?.refreshDevices() }
-        RunLoop.main.add(t, forMode: .common)
-        deviceTimer = t
+        scheduleDeviceTimer()
 
         // Charging animation: only if this Mac has a battery.
         if let battery = Self.internalBattery() {
@@ -127,6 +137,7 @@ final class DeviceBatteryStore: ObservableObject {
                 self.lastChecked = Date()
                 self.looking = false
                 self.checkLow()
+                self.scheduleDeviceTimer()
             }
         }
     }
@@ -145,7 +156,7 @@ final class DeviceBatteryStore: ObservableObject {
 
     private func checkLow() {
         for device in devices {
-            if device.percent <= 15, !warned.contains(device.name) {
+            if device.percent <= 15, !device.charging, !warned.contains(device.name) {
                 warned.insert(device.name)
                 IslandController.shared.showPeek(.lowBattery(name: device.name, percent: device.percent), duration: 6)
             } else if device.percent > 30 {
@@ -165,25 +176,29 @@ final class DeviceBatteryStore: ObservableObject {
         var result: [Device] = []
         func merge(_ found: [Device], source: String) {
             report.append("\(source): " + (found.isEmpty ? "nothing" : found.map {
-                "\($0.name)\($0.address.map { " [\($0)]" } ?? "") \($0.percent)%"
+                "\($0.name)\($0.address.map { " [\($0)]" } ?? "") \($0.percent)%\($0.charging ? " charging" : "")"
             }.joined(separator: ", ")))
             for device in found {
                 if let index = result.firstIndex(where: { existing in
                     (existing.address != nil && existing.address == device.address) || sameDevice(existing.name, device.name)
                 }) {
-                    // Same device: keep the level we have, but take a real name over a guess.
+                    // Same device: keep the level from the more live source (they are asked in
+                    // that order), take a real name over a guess, and note charging from any source.
                     if result[index].nameIsGuess && !device.nameIsGuess { result[index].name = device.name; result[index].nameIsGuess = false }
                     if result[index].address == nil { result[index].address = device.address }
+                    if device.charging { result[index].charging = true }
                 } else {
                     result.append(device)
                 }
             }
         }
-        merge(bluetoothDevices(), source: "Bluetooth")
+        // Live sources first: the device registry is updated by the device itself (also while it
+        // charges over a cable); Bluetooth's own figure can be an old, cached one.
         merge(hidServices(), source: "HID registry")
         merge(parseRegistry(run("/usr/sbin/ioreg", ["-r", "-l", "-a", "-k", "BatteryPercent"])), source: "ioreg")
-        merge(parseBluetooth(run("/usr/sbin/system_profiler", ["SPBluetoothDataType", "-json"])), source: "System Information")
         merge(powerSourceAccessories(), source: "Power sources")
+        merge(bluetoothDevices(), source: "Bluetooth")
+        merge(parseBluetooth(run("/usr/sbin/system_profiler", ["SPBluetoothDataType", "-json"])), source: "System Information")
         // Last chance for a real name: System Information lists every paired device by address.
         let names = bluetoothNames(run("/usr/sbin/system_profiler", ["SPBluetoothDataType", "-json"]))
         for index in result.indices where result[index].nameIsGuess {
@@ -261,10 +276,20 @@ final class DeviceBatteryStore: ObservableObject {
                 guard let value = percent?.intValue, (1...100).contains(value), let name, !name.isEmpty,
                       !result.contains(where: { sameDevice($0.name, name) }) else { continue }
                 let address = IORegistryEntrySearchCFProperty(service, kIOServicePlane, "DeviceAddress" as CFString, kCFAllocatorDefault, options) as? String
-                result.append(Device(name: name, percent: value, address: normalizeAddress(address), nameIsGuess: looksLikeAddress(name)))
+                let transport = IORegistryEntrySearchCFProperty(service, kIOServicePlane, "Transport" as CFString, kCFAllocatorDefault, options) as? String
+                let flags = (IORegistryEntrySearchCFProperty(service, kIOServicePlane, "BatteryStatusFlags" as CFString, kCFAllocatorDefault, options) as? NSNumber)?.intValue
+                result.append(Device(name: name, percent: value, address: normalizeAddress(address), nameIsGuess: looksLikeAddress(name),
+                                     charging: isCharging(transport: transport, flags: flags)))
             }
         }
         return result
+    }
+
+    /// Magic devices report charging with a status flag, and use USB while a cable is in.
+    static func isCharging(transport: String?, flags: Int?) -> Bool {
+        if let transport, transport.uppercased().contains("USB") { return true }
+        if let flags, flags == 3 { return true }
+        return false
     }
 
     /// Some macOS versions also list accessories (AirPods, Magic devices) as power sources.
@@ -278,7 +303,8 @@ final class DeviceBatteryStore: ObservableObject {
                   let name = info[kIOPSNameKey] as? String, !name.isEmpty,
                   let current = info[kIOPSCurrentCapacityKey] as? Int,
                   let max = info[kIOPSMaxCapacityKey] as? Int, max > 0 else { continue }
-            result.append(Device(name: name, percent: current * 100 / max))
+            let charging = (info[kIOPSIsChargingKey] as? Bool ?? false) || (info[kIOPSPowerSourceStateKey] as? String) == kIOPSACPowerValue
+            result.append(Device(name: name, percent: current * 100 / max, charging: charging))
         }
         return result
     }
@@ -309,7 +335,7 @@ final class DeviceBatteryStore: ObservableObject {
         guard !data.isEmpty,
               let list = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [[String: Any]] else { return [] }
         var result: [Device] = []
-        func visit(_ entry: [String: Any], inheritedName: String?) {
+        func visit(_ entry: [String: Any], inheritedName: String?, inheritedTransport: String? = nil) {
             let ioClass = entry["IOClass"] as? String ?? ""
             let ownName = ((entry["Product"] as? String) ?? (entry["DeviceName"] as? String))?.trimmingCharacters(in: .whitespaces)
             let name = (ownName?.isEmpty == false ? ownName : nil) ?? inheritedName
@@ -317,10 +343,12 @@ final class DeviceBatteryStore: ObservableObject {
                let percent = (entry["BatteryPercent"] as? NSNumber)?.intValue, (1...100).contains(percent),
                let name, !name.isEmpty, !result.contains(where: { sameDevice($0.name, name) }) {
                 let address = normalizeAddress(entry["DeviceAddress"] as? String) ?? normalizeAddress(entry["SerialNumber"] as? String)
-                result.append(Device(name: name, percent: percent, address: address, nameIsGuess: looksLikeAddress(name)))
+                let charging = isCharging(transport: entry["Transport"] as? String ?? inheritedTransport,
+                                          flags: (entry["BatteryStatusFlags"] as? NSNumber)?.intValue)
+                result.append(Device(name: name, percent: percent, address: address, nameIsGuess: looksLikeAddress(name), charging: charging))
             }
             for child in entry["IORegistryEntryChildren"] as? [[String: Any]] ?? [] {
-                visit(child, inheritedName: name)
+                visit(child, inheritedName: name, inheritedTransport: entry["Transport"] as? String ?? inheritedTransport)
             }
         }
         for entry in list { visit(entry, inheritedName: nil) }
@@ -501,12 +529,16 @@ final class DeviceConnectionWatcher: NSObject {
             guard let refcon else { return }
             Unmanaged<DeviceConnectionWatcher>.fromOpaque(refcon).takeUnretainedValue().onChange?()
         }
-        for type in [kIOFirstMatchNotification, kIOTerminatedNotification] {
-            var iterator: io_iterator_t = 0
-            if IOServiceAddMatchingNotification(port, type, IOServiceMatching("AppleDeviceManagementHIDEventService"),
-                                                callback, context, &iterator) == KERN_SUCCESS {
-                while case let service = IOIteratorNext(iterator), service != 0 { IOObjectRelease(service) }
-                iterators.append(iterator)
+        // Wireless devices appearing or leaving, and cables going in or out (a Magic Mouse or
+        // keyboard on a cable becomes a USB device and starts charging).
+        for className in ["AppleDeviceManagementHIDEventService", "IOUSBHostDevice"] {
+            for type in [kIOFirstMatchNotification, kIOTerminatedNotification] {
+                var iterator: io_iterator_t = 0
+                if IOServiceAddMatchingNotification(port, type, IOServiceMatching(className),
+                                                    callback, context, &iterator) == KERN_SUCCESS {
+                    while case let service = IOIteratorNext(iterator), service != 0 { IOObjectRelease(service) }
+                    iterators.append(iterator)
+                }
             }
         }
         if CBManager.authorization == .allowedAlways {
