@@ -86,6 +86,20 @@ jobs:
             >> shots/perf/perf-run.txt 2>&1 || true
           cat shots/perf/perf-reports.txt || true
 
+      # The Settings window alone (runs on every Mac, also those without a GPU).
+      - name: Settings screenshots
+        continue-on-error: true
+        run: |
+          mkdir -p shots/settings
+          for mode in light dark; do
+            extra=""
+            [ "$mode" = dark ] && extra="--dark"
+            perl -e 'alarm 90; exec @ARGV' ./dist/Nook.app/Contents/MacOS/Nook --snapshot-tour "$PWD/shots/settings" --settings-only $extra \
+              > "shots/settings/log-$mode.txt" 2>&1 || echo "settings tour ($mode) did not finish" >> shots/settings/log-$mode.txt
+            sleep 1
+          done
+          ls shots/settings
+
       - name: Snapshot tour (light and dark)
         id: tour
         continue-on-error: true

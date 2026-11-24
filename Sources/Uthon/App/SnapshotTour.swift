@@ -35,6 +35,19 @@ enum SnapshotTour {
         UserLibrary.shared.specialDays = [SpecialDay(name: "Ammu's birthday", date: Calendar.current.date(byAdding: .day, value: 12, to: Date())!)]
         seed()
 
+        // Settings only (also works on Macs without a GPU, where the island renders cannot run).
+        if CommandLine.arguments.contains("--settings-only") {
+            for tab in [SettingsTab.general, .look, .wallpaper, .widgets, .night, .ramadan, .dock] {
+                add("live-settings-only-\(tab.rawValue)") { SettingsWindowController.shared.show(tab: tab) }
+                add("capture-settings-only-\(tab.rawValue)") { capture("settings-\(tab.rawValue)") }
+            }
+            add("live-settings-only-search") { SettingsRouter.shared.searchRequest = "dim" }
+            add("capture-settings-only-search") { capture("settings-search") }
+            add("quit") { exit(0) }
+            next(0)
+            return
+        }
+
         let model = IslandModel.shared
 
         // 1. Deterministic renders of every screen (layout check).
