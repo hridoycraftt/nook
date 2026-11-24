@@ -1175,6 +1175,30 @@ enum SelfTest {
         }
     }
 
+    private static func appearanceChecks() {
+        step("Light and dark switching")
+        let settings = AppSettings.shared
+        let saved = settings.appearance
+        IslandController.shared.expand(tab: .home, sticky: true)
+        func windowsMatch(dark: Bool) -> Bool {
+            let wanted: NSAppearance.Name = dark ? .darkAqua : .aqua
+            return NSApp.windows.filter { $0.isVisible }.allSatisfy {
+                $0.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == wanted
+            }
+        }
+        for (choice, dark) in [(AppAppearance.dark, true), (.light, false), (.dark, true)] {
+            settings.appearance = choice
+            AppearanceWatcher.shared.changed(force: true)
+            check("Every window follows \(choice.rawValue)", windowsMatch(dark: dark))
+        }
+        settings.appearance = .system
+        AppearanceWatcher.shared.changed(force: true)
+        check("Auto follows macOS", windowsMatch(dark: AppearanceWatcher.macOSIsDark))
+        settings.appearance = saved
+        AppearanceWatcher.shared.changed(force: true)
+        IslandController.shared.collapse()
+    }
+
     private static func profileChecks() {
         step("Profiles")
         let settings = AppSettings.shared
@@ -1253,6 +1277,7 @@ enum SelfTest {
 
     private static func onlineChecks() {
         profileChecks()
+        appearanceChecks()
         settingsSearchChecks()
         settingsSpeed()
         step("Online sources")

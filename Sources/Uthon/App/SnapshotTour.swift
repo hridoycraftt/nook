@@ -271,6 +271,15 @@ enum SnapshotTour {
             IslandController.shared.expand(tab: .home, sticky: true)
         }
         add("capture-home") { capture("screen-island-home") }
+        // Switch macOS between light and dark while the island is open: the glass and the
+        // cards must change together. (The system setting is changed and its notice sent.)
+        add("live-switch-dark") { switchSystemLook(dark: true) }
+        add("live-switch-dark-wait") { }
+        add("capture-switch-dark") { capture("screen-island-switched-to-dark") }
+        add("live-switch-light") { switchSystemLook(dark: false) }
+        add("live-switch-light-wait") { }
+        add("capture-switch-light") { capture("screen-island-switched-to-light") }
+        add("live-switch-restore") { s.appearance = dark ? .dark : .light }
         add("live-hijri-header") { UserLibrary.shared.hijriInHeader = true }
         add("capture-hijri-header") { capture("screen-island-hijri-header") }
         add("live-hijri-header-off") { UserLibrary.shared.hijriInHeader = false }
@@ -504,6 +513,20 @@ enum SnapshotTour {
         for style in styles where LiveRenderer.errors[style] != nil {
             print("live wallpaper \(style.rawValue) error: \(LiveRenderer.errors[style] ?? "")")
         }
+    }
+
+    /// Pretends macOS switched to dark or light: the setting is written and the system's
+    /// change notice sent, as when the user switches in System Settings.
+    @MainActor
+    private static func switchSystemLook(dark: Bool) {
+        AppSettings.shared.appearance = .system
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        process.arguments = dark ? ["write", "-g", "AppleInterfaceStyle", "Dark"] : ["delete", "-g", "AppleInterfaceStyle"]
+        try? process.run()
+        process.waitUntilExit()
+        DistributedNotificationCenter.default().postNotificationName(
+            Notification.Name("AppleInterfaceThemeChangedNotification"), object: nil, userInfo: nil, deliverImmediately: true)
     }
 
     /// Screenshot without waiting, so an animation keeps running while frames are taken.
