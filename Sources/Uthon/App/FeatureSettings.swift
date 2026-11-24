@@ -50,6 +50,7 @@ struct VerseSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .verse)
             Section {
                 Toggle(L("Daily Quran & Hadith"), isOn: $library.verseEnabled)
                 HomeWidgetToggle(widget: .verse)
@@ -125,6 +126,7 @@ struct NetworkSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .network)
             Section {
                 Toggle(L("Watch the internet connection"), isOn: $library.networkEnabled)
                 HomeWidgetToggle(widget: .network)
@@ -198,6 +200,7 @@ struct NotificationSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .notifications)
             Section {
                 Toggle(L("Show notifications on the island"), isOn: $library.notificationsEnabled)
             } footer: {
@@ -307,6 +310,7 @@ struct NightSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .night)
             Section {
                 HStack(spacing: 14) {
                     Image(systemName: dimmer.level > 0.001 ? "moon.fill" : "moon")
@@ -431,6 +435,7 @@ struct BottomDockSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .bottomDock)
             Section {
                 Toggle(L("Show the bottom dock"), isOn: $library.bottomDockEnabled)
                 Picker(L("Place"), selection: $library.bottomDockSide) {
@@ -540,6 +545,7 @@ struct AISettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .ai)
             Section {
                 Toggle(L("Show the AI tab on the island"), isOn: $library.aiEnabled)
                 HStack {
@@ -592,6 +598,7 @@ struct RamadanSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .ramadan)
             // At a glance: today's Hijri date and, in Ramadan, the next sehri and iftar.
             Section {
                 TimelineView(.periodic(from: .now, by: 30)) { context in

@@ -54,6 +54,29 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// One line about the page (the header card at its top, as in System Settings).
+    var subtitle: String {
+        switch self {
+        case .general: return "Startup, your city, updates and privacy."
+        case .look: return "Theme colours, glass, language and the look of Nook."
+        case .wallpaper: return "Live wallpapers that follow the mouse, your own video and the desktop picture."
+        case .home: return "The widgets on the island's Home pages and their order."
+        case .island: return "Size, tabs, gestures and how the island opens."
+        case .ai: return "An assistant that runs on this Mac with Apple Intelligence."
+        case .widgets: return "Shortcuts, bookmarks, world clocks, prayer times, batteries and more."
+        case .verse: return "A verse of the Quran or a hadith every few hours, in Bangla or English."
+        case .ramadan: return "The Hijri date, sehri and iftar times, and reminders."
+        case .network: return "Wi-Fi, internet speed and connection alerts."
+        case .notifications: return "Notifications from other apps on the island, and a summary."
+        case .night: return "Gently dims your screens at night and makes them warmer."
+        case .alerts: return "Pop-ups on the island and how long they stay."
+        case .profiles: return "Ready-made layouts and your own, switched in one click."
+        case .dock: return "The side dock at the edge of the screen and its widgets."
+        case .bottomDock: return "A small bar next to the macOS Dock."
+        case .care: return "Reminders to drink water and to stand up and stretch."
+        }
+    }
+
     /// Icon tile color, like the colored squares in System Settings.
     var color: Color {
         switch self {
@@ -85,7 +108,34 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
 /// Which Settings tab is showing (so other parts of the app can open a specific one).
 final class SettingsRouter: ObservableObject {
     static let shared = SettingsRouter()
-    @Published var tab: SettingsTab = .general
+    @Published var tab: SettingsTab = .general {
+        didSet {
+            // Back and Forward, as in System Settings.
+            guard tab != oldValue, !movingInHistory else { return }
+            backStack.append(oldValue)
+            if backStack.count > 50 { backStack.removeFirst() }
+            forwardStack.removeAll()
+        }
+    }
+    @Published private(set) var backStack: [SettingsTab] = []
+    @Published private(set) var forwardStack: [SettingsTab] = []
+    private var movingInHistory = false
+
+    func goBack() {
+        guard let previous = backStack.popLast() else { return }
+        movingInHistory = true
+        forwardStack.append(tab)
+        tab = previous
+        movingInHistory = false
+    }
+
+    func goForward() {
+        guard let next = forwardStack.popLast() else { return }
+        movingInHistory = true
+        backStack.append(tab)
+        tab = next
+        movingInHistory = false
+    }
     /// Lets the menu bar (or the screenshot tour) start a search.
     @Published var searchRequest: String?
     /// The setting just found with Search (shown at the top of its page for a moment).
@@ -148,6 +198,10 @@ final class SettingsWindowController {
             // A modern, System Settings-style window: sidebar under a transparent title bar.
             w.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             w.titlebarAppearsTransparent = true
+            // A (SwiftUI-filled) toolbar: the sidebar then runs to the very top with the window
+            // buttons in it, and Back/Forward sit at the top of the page, as in System Settings.
+            w.toolbar = NSToolbar(identifier: "NookSettings")
+            w.titleVisibility = .hidden
             w.toolbarStyle = .unified
             w.isReleasedWhenClosed = false
             w.level = .floating
@@ -199,6 +253,18 @@ struct SettingsView: View {
         } detail: {
             detail(for: router.tab)
                 .navigationTitle(L(router.tab.title))
+                .toolbar {
+                    ToolbarItemGroup(placement: .navigation) {
+                        Button { router.goBack() } label: { Image(systemName: "chevron.left") }
+                            .disabled(router.backStack.isEmpty)
+                            .help(L("Back"))
+                            .keyboardShortcut("[", modifiers: .command)
+                        Button { router.goForward() } label: { Image(systemName: "chevron.right") }
+                            .disabled(router.forwardStack.isEmpty)
+                            .help(L("Forward"))
+                            .keyboardShortcut("]", modifiers: .command)
+                    }
+                }
                 // Below the title bar (an overlay would sit underneath it).
                 .safeAreaInset(edge: .top, spacing: 0) { SettingsFoundBanner().frame(maxWidth: .infinity) }
         }
@@ -234,14 +300,14 @@ struct SettingsView: View {
                     HStack(spacing: 10) {
                         Image(nsImage: AppIcon.current)
                             .resizable()
-                            .frame(width: 34, height: 34)
+                            .frame(width: 38, height: 38)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(L(AppInfo.name)).font(.system(size: 13, weight: .semibold))
-                            Text(L("Version") + " \(AppInfo.version)").font(.system(size: 10)).foregroundStyle(.secondary)
+                            Text(L("Version") + " \(AppInfo.version)").font(.system(size: 11)).foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 0)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
                     .selectionDisabled()
                 }
                 ForEach(Array(SettingsTab.groups.enumerated()), id: \.offset) { _, group in
@@ -287,16 +353,71 @@ private struct SidebarRow: View {
         Label {
             Text(L(tab.title))
         } icon: {
-            Image(systemName: tab.symbol)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 22, height: 22)
-                .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(tab.color.gradient)
-                )
+            SettingsIcon(tab: tab, size: 21)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 1)
+    }
+}
+
+extension Color {
+    /// Mixes in another colour (works on macOS 14, where Color.mix does not exist yet).
+    func blended(with other: Color, _ fraction: CGFloat) -> Color {
+        let base = NSColor(self).usingColorSpace(.sRGB) ?? NSColor(self)
+        return Color(nsColor: base.blended(withFraction: fraction, of: NSColor(other)) ?? base)
+    }
+}
+
+/// A Settings icon as macOS draws them: a coloured rounded square, lighter at the top, with a
+/// thin glassy rim and a soft shadow, and a large white symbol (measured from System Settings:
+/// 21 pt tile, about 5 pt corners, symbol about 62% of the tile).
+struct SettingsIcon: View {
+    let tab: SettingsTab
+    var size: CGFloat = 21
+
+    var body: some View {
+        let radius = size * 0.235
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        ZStack {
+            shape.fill(LinearGradient(colors: [tab.color.blended(with: .white, 0.18), tab.color, tab.color.blended(with: .black, 0.08)],
+                                      startPoint: .top, endPoint: .bottom))
+            // The glassy top light and rim of macOS 26 icons.
+            shape.fill(LinearGradient(colors: [Color.white.opacity(0.28), Color.white.opacity(0)],
+                                      startPoint: .top, endPoint: .center))
+            shape.strokeBorder(LinearGradient(colors: [Color.white.opacity(0.45), Color.white.opacity(0.08)],
+                                              startPoint: .top, endPoint: .bottom), lineWidth: max(0.5, size / 42))
+            Image(systemName: tab.symbol)
+                .font(.system(size: size * 0.6, weight: .medium))
+                .symbolRenderingMode(.monochrome)
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.12), radius: size / 40, y: size / 60)
+        }
+        .frame(width: size, height: size)
+        .shadow(color: .black.opacity(0.18), radius: size / 30, y: size / 50)
+    }
+}
+
+/// The top of every Settings page, as in System Settings: a large icon, the page's name and
+/// a line about what it is for, on a rounded card.
+struct SettingsPageHeader: View {
+    let tab: SettingsTab
+
+    var body: some View {
+        Section {
+            VStack(spacing: 6) {
+                SettingsIcon(tab: tab, size: 52)
+                    .padding(.bottom, 4)
+                Text(L(tab.title))
+                    .font(.system(size: 26, weight: .bold))
+                Text(L(tab.subtitle))
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 460)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+        }
     }
 }
 
@@ -318,6 +439,7 @@ private struct GeneralSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .general)
             Section(L("Startup & shortcut")) {
                 Toggle(L("Open at login"), isOn: $openAtLogin)
                     .onChange(of: openAtLogin) { _, newValue in
@@ -412,6 +534,7 @@ private struct LookSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .look)
             Section(L("Theme color")) {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5), spacing: 12) {
                     ForEach(ThemeColor.allCases) { theme in
@@ -489,6 +612,7 @@ private struct HomeSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .home)
             Section {
                 Stepper(L("Home pages") + ": \(settings.pageCount)", value: Binding(
                     get: { settings.pageCount },
@@ -632,6 +756,7 @@ private struct IslandSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .island)
             Section(L("Top island")) {
                 Toggle(L("Show the island at the top of the screen"), isOn: $settings.islandEnabled)
                 Picker(L("Open island"), selection: $settings.islandStyle) {
@@ -710,6 +835,7 @@ private struct WidgetDataSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .widgets)
             Section {
                 ForEach(Array(library.homeShortcuts.enumerated()), id: \.element) { index, path in
                     HStack {
@@ -840,6 +966,7 @@ private struct AlertsSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .alerts)
             Section {
                 Toggle(L("Show a pop-up when volume or brightness changes"), isOn: $settings.hudEnabled)
                     .onChange(of: settings.hudEnabled) { _, _ in MediaKeyTap.shared.update() }
@@ -889,6 +1016,7 @@ private struct ProfilesSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .profiles)
             Section {
                 ForEach(Profiles.presets) { profile in
                     ProfileRow(profile: profile, active: library.activeProfile == profile.id)
@@ -958,6 +1086,7 @@ private struct DockSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .dock)
             Section {
                 Toggle(L("Show the side dock"), isOn: $settings.sideDockEnabled)
             } footer: {
@@ -1011,6 +1140,7 @@ private struct CareSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .care)
             Section(L("Care reminders")) {
                 Toggle(L("Drink water"), isOn: $settings.waterEnabled)
                 Stepper(L("Every") + " \(settings.waterMinutes) " + L("minutes"), value: $settings.waterMinutes, in: 10...180, step: 5)

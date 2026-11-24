@@ -67,11 +67,7 @@ struct SettingsHitRow: View {
 
     var body: some View {
         HStack(spacing: 9) {
-            Image(systemName: hit.tab.symbol)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 20, height: 20)
-                .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(hit.tab.color.gradient))
+            SettingsIcon(tab: hit.tab, size: 21)
             VStack(alignment: .leading, spacing: 1) {
                 Text(L(hit.title)).font(.system(size: 12, weight: hit.isPage ? .semibold : .regular)).lineLimit(2)
                 if !hit.isPage {

@@ -22,6 +22,7 @@ struct WallpaperSettings: View {
 
     var body: some View {
         Form {
+            SettingsPageHeader(tab: .wallpaper)
             // One switch turns it all on or off.
             Section {
                 HStack(spacing: 14) {
