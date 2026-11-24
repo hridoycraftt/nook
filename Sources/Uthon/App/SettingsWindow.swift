@@ -193,8 +193,6 @@ final class SettingsWindowController {
     private func makeWindow() {
         if window == nil {
             let hosting = NSHostingController(rootView: SettingsView())
-            // Let SwiftUI own the toolbar and title: Back/Forward show up, and the page title stays hidden.
-            hosting.sceneBridgingOptions = [.toolbars, .title]
             let w = NSWindow(contentViewController: hosting)
             w.title = L("Customize") + " \(AppInfo.name)"
             // A modern, System Settings-style window: sidebar under a transparent title bar.
@@ -202,6 +200,7 @@ final class SettingsWindowController {
             w.titlebarAppearsTransparent = true
             // A (SwiftUI-filled) toolbar: the sidebar then runs to the very top with the window
             // buttons in it, and Back/Forward sit at the top of the page, as in System Settings.
+            w.toolbar = NSToolbar(identifier: "NookSettings")
             w.titleVisibility = .hidden
             w.toolbarStyle = .unified
             w.isReleasedWhenClosed = false
