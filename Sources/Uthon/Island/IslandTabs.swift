@@ -555,6 +555,12 @@ struct WeatherTile: View {
                             .buttonStyle(.plain)
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Theme.accent)
+                    } else if !noCity && weather.problem == .none {
+                        // Still on its way (just after launch or after changing the city).
+                        HStack(spacing: 5) {
+                            ProgressView().controlSize(.mini)
+                            Text(L("Loading…")).font(.system(size: 10)).foregroundStyle(Color.secondary)
+                        }
                     } else {
                         if !noCity && weather.problem == .cityNotFound {
                             Text(L("City not found")).font(.system(size: 10)).foregroundStyle(Color.secondary).lineLimit(1)
