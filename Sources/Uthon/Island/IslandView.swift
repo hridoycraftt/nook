@@ -9,7 +9,6 @@ struct IslandView: View {
     @ObservedObject private var player = NowPlayingStore.shared
     @ObservedObject private var care = CareReminders.shared
     @ObservedObject private var timers = TimerStore.shared
-    @Environment(\.colorScheme) private var systemScheme
 
     private enum Mode: Equatable { case closed, peek, open }
 
@@ -84,7 +83,9 @@ struct IslandView: View {
         .scaleEffect(visible ? 1 : 0.92, anchor: .top)
         .opacity(visible ? 1 : 0)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .environment(\.colorScheme, glass ? systemScheme : .dark)
+        // The look Nook decided on (the same one its windows are given), not the window's own,
+        // which can lag behind a light/dark switch and leave light cards on dark glass.
+        .environment(\.colorScheme, glass ? (AppearanceWatcher.isDark ? .dark : .light) : .dark)
         .animation(mode == .open ? IslandModel.openSpring : IslandModel.closeSpring, value: mode)
         .animation(IslandModel.spring, value: activity)
         .animation(IslandModel.peekSpring, value: model.peek?.id)

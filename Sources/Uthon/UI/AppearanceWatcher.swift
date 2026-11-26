@@ -10,8 +10,12 @@ final class AppearanceWatcher {
     private var lastIsDark: Bool?
     private var safetyTimer: Timer?
 
+    /// The look decided at the last check, cached (cheap enough for views to read every frame).
+    private(set) static var isDark = false
+
     func start() {
         lastIsDark = Self.systemIsDark
+        Self.isDark = lastIsDark ?? false
         DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name("AppleInterfaceThemeChangedNotification"), object: nil, queue: .main
         ) { [weak self] _ in
@@ -71,6 +75,7 @@ final class AppearanceWatcher {
     /// Called when the system look may have changed; rebuilds only if it really did.
     func changed(force: Bool = false) {
         let dark = Self.systemIsDark
+        Self.isDark = dark
         Self.applyToWindows()
         guard force || dark != lastIsDark else { return }
         lastIsDark = dark

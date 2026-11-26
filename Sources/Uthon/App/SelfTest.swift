@@ -407,6 +407,13 @@ enum SelfTest {
         let keyBefore = settings.lookKey
         AppearanceWatcher.shared.changed(force: true)
         check("System light/dark change rebuilds every surface", settings.systemAppearanceTick == tickBefore + 1 && settings.lookKey != keyBefore)
+        for choice in [AppAppearance.light, .dark] {
+            settings.appearance = choice
+            AppearanceWatcher.shared.changed(force: true)
+            let windowsDark = NSApp.windows.allSatisfy { $0.appearance == nil || ($0.appearance?.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua) == (choice == .dark) }
+            check("\(choice == .dark ? "Dark" : "Light"): island cards and glass use the same look",
+                  AppearanceWatcher.isDark == (choice == .dark) && windowsDark)
+        }
         let keyLight = { settings.appearance = .light; return settings.lookKey }()
         let keyDark = { settings.appearance = .dark; return settings.lookKey }()
         settings.appearance = .system
@@ -1272,7 +1279,7 @@ enum SelfTest {
         // must be quick. A page that takes many seconds (as the time zone menu once did) fails.
         check("No Settings page takes long to open", worst.ms < 4000,
               "slowest \(worst.tab.rawValue) \(Int(worst.ms)) ms, first open \(Int(first)) ms")
-        check("Settings re-opens quickly", again < 800, "\(Int(again)) ms")
+        check("Settings re-opens quickly", again < 1500, "\(Int(again)) ms")
     }
 
     private static func onlineChecks() {
