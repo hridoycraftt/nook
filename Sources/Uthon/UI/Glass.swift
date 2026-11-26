@@ -31,7 +31,10 @@ struct LiquidGlass<S: Shape>: View {
     private func automatic(dark: Bool) -> some View {
         #if compiler(>=6.2)
         if #available(macOS 26.0, *) {
-            Color.clear.glassEffect(.regular, in: shape)
+            ZStack {
+                Color.clear.glassEffect(.regular, in: shape)
+                veil(dark: dark, clear: false)
+            }
         } else {
             native(dark: dark)
         }
@@ -46,9 +49,7 @@ struct LiquidGlass<S: Shape>: View {
         if #available(macOS 26.0, *) {
             ZStack {
                 Color.clear.glassEffect(clear ? .clear : .regular, in: shape)
-                if clear {
-                    shape.fill(dark ? Color.black.opacity(0.2) : Color.white.opacity(0.1))
-                }
+                veil(dark: dark, clear: clear)
             }
         } else {
             frosted(clear: clear, dark: dark)
@@ -56,6 +57,16 @@ struct LiquidGlass<S: Shape>: View {
         #else
         frosted(clear: clear, dark: dark)
         #endif
+    }
+
+    /// Apple's Liquid Glass picks its own light or dark look from what is behind it (it turns
+    /// dark over a dark photo or page even in Light mode), while the cards, text and icons on
+    /// it follow Nook's look. A thin veil in the look's own colour keeps the glass on the same
+    /// side as everything on it, so dark icons never end up on dark glass (or light on light).
+    private func veil(dark: Bool, clear: Bool) -> some View {
+        shape.fill(dark ? Color.black.opacity(clear ? 0.30 : 0.38)
+                        : Color.white.opacity(clear ? 0.45 : 0.62))
+            .allowsHitTesting(false)
     }
 
     /// The system's own translucent material plus a hairline rim, nothing invented.
@@ -272,6 +283,7 @@ extension View {
 struct NookGlass<S: Shape>: ViewModifier {
     var shape: S
     @ObservedObject private var settings = AppSettings.shared
+    @Environment(\.colorScheme) private var scheme
 
     /// True where Apple's Liquid Glass is available to this build and this Mac.
     static var isSystemGlass: Bool {
@@ -287,6 +299,9 @@ struct NookGlass<S: Shape>: ViewModifier {
         if #available(macOS 26.0, *) {
             content
                 .background {
+                    // Same veil as the island: keeps the glass on the side of Nook's look,
+                    // so the cards on it never clash with glass that turned dark (or light).
+                    shape.fill(scheme == .dark ? Color.black.opacity(0.30) : Color.white.opacity(0.50))
                     if settings.tintGlass { shape.fill(Theme.accent.opacity(0.12)) }
                 }
                 .glassEffect(settings.glassClarity == .clear ? .clear : .regular, in: shape)
