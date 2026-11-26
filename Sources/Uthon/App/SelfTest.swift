@@ -911,6 +911,11 @@ enum SelfTest {
         library.setPeekSeconds(.download, 99)
         check("Durations are capped at 30 s", library.peekSeconds(.download) == 30)
         library.setPeekSeconds(.download, 0.5)
+        // The test machine's pointer can rest over the island, which (rightly) keeps a
+        // pop-up open while hovered; that is not what this checks.
+        let savedStay = library.peekStayOnHover
+        library.peekStayOnHover = false
+        defer { library.peekStayOnHover = savedStay }
         IslandController.shared.showPeek(.download(URL(fileURLWithPath: "/System/Applications/Calculator.app")), duration: 6)
         check("Download pop-up shows", IslandModel.shared.peek?.kind.type == .download)
         RunLoop.main.run(until: Date().addingTimeInterval(1.3))
