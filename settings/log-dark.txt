@@ -1,0 +1,17 @@
+snapshot step: live-settings-only-general
+snapshot step: capture-settings-only-general
+snapshot step: live-settings-only-look
+snapshot step: capture-settings-only-look
+snapshot step: live-settings-only-wallpaper
+snapshot step: capture-settings-only-wallpaper
+snapshot step: live-settings-only-widgets
+snapshot step: capture-settings-only-widgets
+snapshot step: live-settings-only-night
+snapshot step: capture-settings-only-night
+snapshot step: live-settings-only-ramadan
+snapshot step: capture-settings-only-ramadan
+snapshot step: live-settings-only-dock
+snapshot step: capture-settings-only-dock
+snapshot step: live-settings-only-search
+snapshot step: capture-settings-only-search
+snapshot step: quit

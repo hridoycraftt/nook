@@ -1,0 +1,8 @@
+Nook performance (1024x768 @1.0x)
+phase                    cpu %   frames     late   worst ms
+idle-closed                 3.6      361        1       39.4
+open-home                   4.6      372        4       49.3
+open-close                 50.1      267       79      249.2
+tab-switch                 17.1      311       17      505.4
+wallpaper-idle              7.3      345        8       97.1
+wallpaper-open-close       55.9      309       57      150.0
