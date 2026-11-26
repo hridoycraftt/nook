@@ -1,0 +1,14 @@
+576.924 screen 1920.0x1080.0 scale 1.0 island scale 1.0
+578.935 open 1
+580.335 close 1
+581.536 open 2
+583.369 close 2
+583.982 open 3
+589.422 done
+592.776 screen 1920.0x1080.0 scale 1.0 island scale 1.0
+594.787 open 1
+596.186 close 1
+597.383 open 2
+599.221 close 2
+599.796 open 3
+605.092 done

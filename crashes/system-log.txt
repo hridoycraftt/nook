@@ -1,0 +1,49 @@
+Wall Clock adjustment detected - results might be strange while using --end
+Timestamp               Ty Process[PID:TID]
+2026-11-26 04:06:22.376 F  Nook[6762:58a1] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:06:24.431 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:24.432 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:24.432 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:24.432 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:24.436 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:24.490 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:24.572 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:24.638 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:24.679 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:25.580 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:25.789 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:26.919 F  Nook[6762:58a1] [com.apple.runtime-issues:AppKit] Invalid view geometry: height is negative.
+2026-11-26 04:06:30.321 Df Nook[6762:58a4] [com.apple.launchservices:default] LSExceptions shared instance invalidated for timeout.
+2026-11-26 04:06:46.202 F  Nook[6762:58c8] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.219 F  Nook[6762:58c8] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.527 F  Nook[6762:58c8] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.529 F  Nook[6762:58c8] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.540 F  Nook[6762:58c8] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.542 F  Nook[6762:58c8] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.579 F  Nook[6762:58a5] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.581 F  Nook[6762:58a5] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.594 F  Nook[6762:58a5] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.596 F  Nook[6762:58a5] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.599 F  Nook[6762:58a5] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:46.601 F  Nook[6762:58a5] [com.apple.runtime-issues:Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-26 04:06:55.699 F  Nook[7842:646d] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:07:06.309 Df Nook[7842:646f] [com.apple.launchservices:default] LSExceptions shared instance invalidated for timeout.
+2026-11-26 04:07:11.452 F  Nook[8077:66e5] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:07:21.991 Df Nook[8077:66f1] [com.apple.launchservices:default] LSExceptions shared instance invalidated for timeout.
+2026-11-26 04:07:27.782 F  Nook[8442:6a4d] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:07:36.983 Df Nook[8442:6a97] [com.apple.launchservices:default] LSExceptions shared instance invalidated for timeout.
+2026-11-26 04:08:23.912 F  Nook[9804:7792] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:08:33.207 Df Nook[9804:7794] [com.apple.launchservices:default] LSExceptions shared instance invalidated for timeout.
+2026-11-26 04:09:20.683 F  Nook[10857:81c2] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:09:30.079 Df Nook[10857:81d5] [com.apple.launchservices:default] LSExceptions shared instance invalidated for timeout.
+2026-11-26 04:10:20.109 F  Nook[11805:8b35] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:10:28.959 Df Nook[11805:8b37] [com.apple.launchservices:default] LSExceptions shared instance invalidated for timeout.
+2026-11-26 04:10:31.901 F  Nook[12046:8ddd] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:10:42.940 F  Nook[12456:9217] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:10:44.419 F  Nook[12456:9217] [com.apple.SwiftUI:Invalid Configuration] Unable to render flattened version of PlatformViewRepresentableAdaptor<DraggingDestinationView>.
+2026-11-26 04:10:44.434 F  Nook[12456:9217] [com.apple.SwiftUI:Invalid Configuration] Unable to render flattened version of PlatformViewRepresentableAdaptor<AppKitProgressView>.
+2026-11-26 04:10:44.434 F  Nook[12456:9217] [com.apple.SwiftUI:Invalid Configuration] Unable to render flattened version of PlatformViewRepresentableAdaptor<DraggingDestinationView>.
+2026-11-26 04:10:45.137 F  Nook[12529:92ec] [com.apple.GenerativeModels:availability] <private>
+2026-11-26 04:10:46.570 F  Nook[12529:92ec] [com.apple.SwiftUI:Invalid Configuration] Unable to render flattened version of PlatformViewRepresentableAdaptor<DraggingDestinationView>.
+2026-11-26 04:10:46.572 F  Nook[12529:92ec] [com.apple.SwiftUI:Invalid Configuration] Unable to render flattened version of PlatformViewRepresentableAdaptor<AppKitProgressView>.
+2026-11-26 04:10:46.572 F  Nook[12529:92ec] [com.apple.SwiftUI:Invalid Configuration] Unable to render flattened version of PlatformViewRepresentableAdaptor<DraggingDestinationView>.

@@ -1,0 +1,7 @@
+anim-test 592.776 screen 1920.0x1080.0 scale 1.0 island scale 1.0
+anim-test 594.787 open 1
+anim-test 596.186 close 1
+anim-test 597.383 open 2
+anim-test 599.221 close 2
+anim-test 599.796 open 3
+anim-test 605.092 done
